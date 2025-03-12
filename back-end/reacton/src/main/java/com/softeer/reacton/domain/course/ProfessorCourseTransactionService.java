@@ -1,14 +1,9 @@
 package com.softeer.reacton.domain.course;
 
-import com.softeer.reacton.domain.question.QuestionRepository;
-import com.softeer.reacton.domain.question.QuestionService;
 import com.softeer.reacton.domain.request.Request;
 import com.softeer.reacton.domain.request.RequestRepository;
-import com.softeer.reacton.domain.request.RequestService;
 import com.softeer.reacton.domain.schedule.Schedule;
 import com.softeer.reacton.domain.schedule.ScheduleRepository;
-import com.softeer.reacton.global.sse.SseMessageSender;
-import com.softeer.reacton.global.sse.dto.SseMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -21,10 +16,6 @@ public class ProfessorCourseTransactionService {
     private final CourseRepository courseRepository;
     private final ScheduleRepository scheduleRepository;
     private final RequestRepository requestRepository;
-    private final QuestionRepository questionRepository;
-    private final SseMessageSender sseMessageSender;
-    private final QuestionService questionService;
-    private final RequestService requestService;
 
     @Transactional
     public long saveCourse(Course course) {
@@ -44,18 +35,9 @@ public class ProfessorCourseTransactionService {
     }
 
     @Transactional
-    public void closeCourse(Course course) {
-        long courseId = course.getId();
-        log.debug("수업을 종료 상태로 변경합니다. courseId = {}", courseId);
-
-        course.deactivate();
-
-        questionRepository.deleteCompleteByCourse(course);
-
-        log.debug("SSE 서버에 수업 종료 메시지 전송을 요청합니다.");
-        SseMessage<Void> sseMessage = new SseMessage<>("COURSE_CLOSED", null);
-        sseMessageSender.sendMessageToAll(String.valueOf(courseId), sseMessage);
-
-        log.info("수업이 종료 상태로 변경되었습니다. courseId = {}", courseId);
+    public void updateCourseFile(Course course, String fileName, String s3Key) {
+        course.setFileName(fileName);
+        course.setFileS3Key(s3Key);
+        courseRepository.save(course);
     }
 }

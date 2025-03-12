@@ -216,7 +216,6 @@ public class ProfessorCourseService {
         log.info("수업이 종료 상태로 변경되었습니다. courseId = {}", courseId);
     }
 
-    @Transactional
     public Map<String, String> uploadFile(String oauthId, long courseId, MultipartFile file) {
         Long professorId = professorService.getProfessorIdByOauthId(oauthId);
         Course course = courseRepository.findByIdAndProfessorId(courseId, professorId)
@@ -233,9 +232,7 @@ public class ProfessorCourseService {
             log.debug("요청에 파일이 존재하지 않으므로 기존에 저장된 파일만 삭제합니다.");
         }
 
-        course.setFileName(fileName);
-        course.setFileS3Key(s3Key);
-        courseRepository.save(course);
+        professorCourseTransactionService.updateCourseFile(course, fileName, s3Key);
 
         return Map.of("fileName", fileName != null ? fileName : "");
     }
