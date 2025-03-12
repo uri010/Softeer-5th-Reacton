@@ -2,14 +2,11 @@ package com.softeer.reacton.domain.course;
 
 import com.softeer.reacton.domain.course.dto.*;
 import com.softeer.reacton.domain.professor.Professor;
-import com.softeer.reacton.domain.professor.ProfessorRepository;
 import com.softeer.reacton.domain.professor.ProfessorService;
-import com.softeer.reacton.domain.question.QuestionRepository;
 import com.softeer.reacton.domain.question.QuestionService;
 import com.softeer.reacton.domain.request.Request;
 import com.softeer.reacton.domain.request.RequestService;
 import com.softeer.reacton.domain.schedule.Schedule;
-import com.softeer.reacton.domain.schedule.ScheduleRepository;
 import com.softeer.reacton.domain.schedule.ScheduleService;
 import com.softeer.reacton.global.exception.BaseException;
 import com.softeer.reacton.global.exception.code.CourseErrorCode;
@@ -34,26 +31,22 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class ProfessorCourseService {
-
-    private final ProfessorRepository professorRepository;
     private final CourseRepository courseRepository;
-    private final ScheduleRepository scheduleRepository;
-    private final QuestionRepository questionRepository;
 
     private final ProfessorService professorService;
     private final ScheduleService scheduleService;
     private final QuestionService questionService;
     private final RequestService requestService;
-
     private final ProfessorCourseTransactionService professorCourseTransactionService;
     private final S3Service s3Service;
+
+    private final SseMessageSender sseMessageSender;
     private final SecureRandom secureRandom = new SecureRandom();
 
     private static final int MAX_RETRIES = 10;
     private static final String FILE_DIRECTORY = "course-files/";
     private static final long MAX_FILE_SIZE = 100L * 1024 * 1024;
     private static final int PRESIGNED_URL_EXPIRATION_MINUTES = 1;
-    private final SseMessageSender sseMessageSender;
 
     public ActiveCourseResponse getActiveCourseByUser(String oauthId) {
         log.debug("활성화된 수업을 조회합니다.");
@@ -90,7 +83,7 @@ public class ProfessorCourseService {
 
         Long professorId = professorService.getProfessorIdByOauthId(oauthId);
         Course course = courseRepository.findByIdAndProfessorId(courseId, professorId)
-                .orElseThrow( () -> new BaseException(CourseErrorCode.COURSE_NOT_FOUND));
+                .orElseThrow(() -> new BaseException(CourseErrorCode.COURSE_NOT_FOUND));
 
         List<CourseScheduleResponse> schedules = scheduleService.getSchedulesByCourseInOrder(course);
         List<CourseQuestionResponse> questions = questionService.getQuestionsByCourseInOrder(course);
@@ -139,18 +132,18 @@ public class ProfessorCourseService {
 
         Long professorId = professorService.getProfessorIdByOauthId(oauthId);
         Course course = courseRepository.findByIdAndProfessorId(courseId, professorId)
-                .orElseThrow( () -> new BaseException(CourseErrorCode.COURSE_NOT_FOUND));
+                .orElseThrow(() -> new BaseException(CourseErrorCode.COURSE_NOT_FOUND));
 
         course.update(request);
 
         List<CourseRequest.ScheduleRequest> scheduleRequests = request.getSchedules();
-        scheduleRepository.deleteAllByCourse(course);
+        scheduleService.deleteAllByCourseId(courseId);
         course.getSchedules().clear(); // 영속성 컨텍스트에서도 제거
 
         List<Schedule> newSchedules = scheduleRequests.stream()
                 .map(scheduleRequest -> Schedule.create(scheduleRequest, course))
                 .collect(Collectors.toList());
-        scheduleRepository.saveAll(newSchedules);
+        scheduleService.saveAll(newSchedules);
         course.setSchedules(newSchedules);
 
         log.info("수업 업데이트가 완료되었습니다. : courseId = {}", courseId);
@@ -181,14 +174,14 @@ public class ProfessorCourseService {
 
         Long professorId = professorService.getProfessorIdByOauthId(oauthId);
         Course course = courseRepository.findByIdAndProfessorId(courseId, professorId)
-                .orElseThrow( () -> new BaseException(CourseErrorCode.COURSE_NOT_FOUND));
+                .orElseThrow(() -> new BaseException(CourseErrorCode.COURSE_NOT_FOUND));
 
         boolean wasActive = course.isActive();
         log.debug("시작을 요청한 수업의 활성화 상태입니다. : isActive = {}", wasActive);
 
         courseRepository.deactivateOtherCourses(professorId, courseId);
 
-        if( !wasActive ) {
+        if (!wasActive) {
             questionService.deleteAllByCourseId(course.getId());
             requestService.resetCountByCourseId(course.getId());
 
@@ -204,7 +197,7 @@ public class ProfessorCourseService {
 
         Long professorId = professorService.getProfessorIdByOauthId(oauthId);
         Course course = courseRepository.findByIdAndProfessorId(courseId, professorId)
-                .orElseThrow( () -> new BaseException(CourseErrorCode.COURSE_NOT_FOUND));
+                .orElseThrow(() -> new BaseException(CourseErrorCode.COURSE_NOT_FOUND));
 
         course.deactivate();
         questionService.deleteCompleteByCourse(course);
@@ -219,7 +212,7 @@ public class ProfessorCourseService {
     public Map<String, String> uploadFile(String oauthId, long courseId, MultipartFile file) {
         Long professorId = professorService.getProfessorIdByOauthId(oauthId);
         Course course = courseRepository.findByIdAndProfessorId(courseId, professorId)
-                .orElseThrow( () -> new BaseException(CourseErrorCode.COURSE_NOT_FOUND));
+                .orElseThrow(() -> new BaseException(CourseErrorCode.COURSE_NOT_FOUND));
 
         deleteExistingFileIfExists(course);
 
@@ -240,13 +233,21 @@ public class ProfessorCourseService {
     public Map<String, String> getCourseFileUrl(String oauthId, long courseId) {
         Long professorId = professorService.getProfessorIdByOauthId(oauthId);
         Course course = courseRepository.findByIdAndProfessorId(courseId, professorId)
-                .orElseThrow( () -> new BaseException(CourseErrorCode.COURSE_NOT_FOUND));
+                .orElseThrow(() -> new BaseException(CourseErrorCode.COURSE_NOT_FOUND));
 
         if (isFileExists(course)) {
             String s3Url = s3Service.generatePresignedUrl(course.getFileS3Key(), PRESIGNED_URL_EXPIRATION_MINUTES).toString();
             return Map.of("fileUrl", s3Url);
         }
         return Map.of("fileUrl", "");
+    }
+
+    public List<Course> getCoursesByProfessor(Professor professor) {
+        return courseRepository.findByProfessor(professor);
+    }
+
+    public void deleteByProfessor(Professor professor) {
+        courseRepository.deleteByProfessor(professor);
     }
 
     private List<CourseScheduleResponse> getSchedulesByCourse(Course course) {
