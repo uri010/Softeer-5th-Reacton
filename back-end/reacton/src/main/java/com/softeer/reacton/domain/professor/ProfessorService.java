@@ -171,6 +171,11 @@ public class ProfessorService {
             .orElseThrow(() -> new BaseException(ProfessorErrorCode.PROFESSOR_NOT_FOUND));
     }
 
+    public Professor getProfessorByOauthId(String oauthId) {
+        return professorRepository.findByOauthId(oauthId)
+                .orElseThrow(() -> new BaseException(ProfessorErrorCode.PROFESSOR_NOT_FOUND));
+    }
+
     private boolean validateProfileImage(MultipartFile file) {
         if (file == null || file.isEmpty()) {
             return false;

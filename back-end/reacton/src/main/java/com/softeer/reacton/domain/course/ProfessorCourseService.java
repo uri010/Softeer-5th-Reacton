@@ -8,7 +8,6 @@ import com.softeer.reacton.domain.question.Question;
 import com.softeer.reacton.domain.question.QuestionRepository;
 import com.softeer.reacton.domain.question.QuestionService;
 import com.softeer.reacton.domain.request.Request;
-import com.softeer.reacton.domain.request.RequestConstants;
 import com.softeer.reacton.domain.request.RequestService;
 import com.softeer.reacton.domain.schedule.Schedule;
 import com.softeer.reacton.domain.schedule.ScheduleRepository;
@@ -70,16 +69,18 @@ public class ProfessorCourseService {
         return null;
     }
 
+    @Transactional
     public long createCourse(String oauthId, CourseRequest request) {
         log.debug("수업을 생성합니다.");
 
-        Professor professor = professorRepository.findByOauthId(oauthId)
-                .orElseThrow(() -> new BaseException(ProfessorErrorCode.PROFESSOR_NOT_FOUND));
+        Professor professor = professorService.getProfessorByOauthId(oauthId);
 
         Course course = Course.create(request, professor);
-        List<Schedule> schedules = createSchedules(request, course);
+
+        List<Schedule> schedules = scheduleService.createSchedules(request, course);
         course.setSchedules(schedules);
-        List<Request> requests = createRequests(course);
+
+        List<Request> requests = requestService.createRequests(course);
         course.setRequests(requests);
 
         return generateAccessCodeAndSave(course);
@@ -154,7 +155,7 @@ public class ProfessorCourseService {
     public void deleteCourse(String oauthId, long courseId) {
         log.debug("수업을 삭제합니다. : courseId = {}", courseId);
 
-        Long professorIdByOauth = professorService.findProfessorIdByOauthId(oauthId);
+        Long professorIdByOauth = professorService.getProfessorIdByOauthId(oauthId);
         Long professorIdByCourse = courseRepository.findProfessorIdById(courseId);
 
         if (professorIdByCourse == null) {
@@ -337,24 +338,6 @@ public class ProfessorCourseService {
                 .map(Schedule::getStartTime)
                 .min(Comparator.naturalOrder())
                 .orElse(LocalTime.MAX);
-    }
-
-    private List<Schedule> createSchedules(CourseRequest request, Course course) {
-        List<Schedule> schedules = new ArrayList<>();
-        for (CourseRequest.ScheduleRequest scheduleRequest : request.getSchedules()) {
-            Schedule schedule = Schedule.create(scheduleRequest, course);
-            schedules.add(schedule);
-        }
-        return schedules;
-    }
-
-    private List<Request> createRequests(Course course) {
-        List<Request> requests = new ArrayList<>();
-        for (String requestType : RequestConstants.REQUEST_TYPES) {
-            Request request = Request.create(requestType, course);
-            requests.add(request);
-        }
-        return requests;
     }
 
     private long generateAccessCodeAndSave(Course course) {

@@ -6,6 +6,8 @@ import com.softeer.reacton.global.exception.BaseException;
 import com.softeer.reacton.global.exception.code.CourseErrorCode;
 import com.softeer.reacton.global.exception.code.RequestErrorCode;
 import jakarta.transaction.Transactional;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -40,6 +42,15 @@ public class RequestService {
     @Transactional
     public void deleteAllByCourseId(Long courseId) {
         requestRepository.deleteAllByCourseId(courseId);
+    }
+
+    public List<Request> createRequests(Course course) {
+        List<Request> requests = new ArrayList<>();
+        for (String requestType : RequestConstants.REQUEST_TYPES) {
+            Request request = Request.create(requestType, course);
+            requests.add(request);
+        }
+        return requests;
     }
 
     private Course getCourse(Long courseId) {
