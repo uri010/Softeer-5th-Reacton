@@ -2,6 +2,8 @@ package com.softeer.reacton.domain.course.controller;
 
 import com.softeer.reacton.domain.course.service.ProfessorCourseService;
 import com.softeer.reacton.domain.course.dto.*;
+import com.softeer.reacton.domain.professor.entity.Professor;
+import com.softeer.reacton.domain.professor.service.ProfessorService;
 import com.softeer.reacton.global.dto.SuccessResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -29,6 +31,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class ProfessorCourseController {
     private final ProfessorCourseService professorCourseService;
+    private final ProfessorService professorService;
 
     @Value("${frontend.base-url}")
     private String FRONTEND_BASE_URL;
@@ -44,7 +47,8 @@ public class ProfessorCourseController {
     )
     public ResponseEntity<?> getActiveCourses(HttpServletRequest request) {
         String oauthId = (String) request.getAttribute("oauthId");
-        ActiveCourseResponse activeCourse = professorCourseService.getActiveCourseByUser(oauthId);
+        Long professorId = professorService.getProfessorIdByOauthId(oauthId);
+        ActiveCourseResponse activeCourse = professorCourseService.getActiveCourseByUser(professorId);
 
         if (activeCourse != null) {
             log.debug("활성화된 수업이 존재합니다. : courseId = {}", activeCourse.getId());
@@ -66,8 +70,9 @@ public class ProfessorCourseController {
     )
     public ResponseEntity<SuccessResponse<Map<String, String>>> createCourse(HttpServletRequest request, @RequestBody @Valid @NonNull CourseRequest courseRequest) {
         String oauthId = (String) request.getAttribute("oauthId");
+        Professor professor = professorService.getProfessorByOauthId(oauthId);
 
-        long courseId = professorCourseService.createCourse(oauthId, courseRequest);
+        long courseId = professorCourseService.createCourse(professor, courseRequest);
 
         Map<String, String> response = new HashMap<>();
         response.put("courseId", String.valueOf(courseId));
@@ -94,7 +99,8 @@ public class ProfessorCourseController {
         log.debug("특정 수업에 대한 상세 정보를 요청합니다. : courseId = {}", courseId);
 
         String oauthId = (String) request.getAttribute("oauthId");
-        CourseDetailResponse response = professorCourseService.getCourseDetail(courseId, oauthId);
+        Long professorId = professorService.getProfessorIdByOauthId(oauthId);
+        CourseDetailResponse response = professorCourseService.getCourseDetail(courseId, professorId);
 
         log.info("수업 상세 정보 조회를 완료했습니다.");
         return ResponseEntity
@@ -115,7 +121,8 @@ public class ProfessorCourseController {
         log.debug("사용자의 전체 수업 목록을 요청합니다.");
 
         String oauthId = (String) request.getAttribute("oauthId");
-        CourseAllResponse response = professorCourseService.getAllCourses(oauthId);
+        Long professorId = professorService.getProfessorIdByOauthId(oauthId);
+        CourseAllResponse response = professorCourseService.getAllCourses(professorId);
 
         log.info("전체 수업 정보 조회를 완료했습니다.");
         return ResponseEntity
@@ -138,7 +145,9 @@ public class ProfessorCourseController {
         log.debug("검색 결과에 따른 수업 목록을 요청합니다. : keyword = {}", keyword);
 
         String oauthId = (String) request.getAttribute("oauthId");
-        List<CourseSummaryResponse> response = professorCourseService.searchCourses(oauthId, keyword);
+        Long professorId = professorService.getProfessorIdByOauthId(oauthId);
+
+        List<CourseSummaryResponse> response = professorCourseService.searchCourses(professorId, keyword);
 
         log.info("검색을 완료했습니다.");
         return ResponseEntity
@@ -157,7 +166,9 @@ public class ProfessorCourseController {
             @PathVariable(value = "courseId") long courseId,
             @RequestBody @Valid CourseRequest courseRequest) {
         String oauthId = (String) request.getAttribute("oauthId");
-        professorCourseService.updateCourse(oauthId, courseId, courseRequest);
+        Long professorId = professorService.getProfessorIdByOauthId(oauthId);
+
+        professorCourseService.updateCourse(professorId, courseId, courseRequest);
 
         Map<String, String> response = new HashMap<>();
         response.put("courseId", String.valueOf(courseId));
@@ -175,7 +186,9 @@ public class ProfessorCourseController {
     )
     public ResponseEntity<Void> deleteCourse(HttpServletRequest request, @PathVariable(value = "courseId") long courseId) {
         String oauthId = (String) request.getAttribute("oauthId");
-        professorCourseService.deleteCourse(oauthId, courseId);
+        Long professorId = professorService.getProfessorIdByOauthId(oauthId);
+
+        professorCourseService.deleteCourse(professorId, courseId);
 
         return ResponseEntity.noContent().build();
     }
@@ -188,7 +201,9 @@ public class ProfessorCourseController {
     )
     public ResponseEntity<Void> startCourse(HttpServletRequest request, @PathVariable(value = "courseId") long courseId) {
         String oauthId = (String) request.getAttribute("oauthId");
-        professorCourseService.startCourse(oauthId, courseId);
+        Long professorId = professorService.getProfessorIdByOauthId(oauthId);
+
+        professorCourseService.startCourse(professorId, courseId);
 
         return ResponseEntity.noContent().build();
     }
@@ -201,7 +216,9 @@ public class ProfessorCourseController {
     )
     public ResponseEntity<Void> closeCourse(HttpServletRequest request, @PathVariable(value = "courseId") long courseId) {
         String oauthId = (String) request.getAttribute("oauthId");
-        professorCourseService.closeCourse(oauthId, courseId);
+        Long professorId = professorService.getProfessorIdByOauthId(oauthId);
+
+        professorCourseService.closeCourse(professorId, courseId);
 
         return ResponseEntity.noContent().build();
     }
@@ -217,7 +234,9 @@ public class ProfessorCourseController {
             @PathVariable(value = "courseId") long courseId,
             @RequestPart(value = "file", required = false) MultipartFile file) {
         String oauthId = (String) request.getAttribute("oauthId");
-        Map<String, String> response = professorCourseService.uploadFile(oauthId, courseId, file);
+        Long professorId = professorService.getProfessorIdByOauthId(oauthId);
+
+        Map<String, String> response = professorCourseService.uploadFile(professorId, courseId, file);
 
         return ResponseEntity
                 .status(HttpStatus.OK)
@@ -235,7 +254,9 @@ public class ProfessorCourseController {
             HttpServletRequest request,
             @PathVariable(value = "courseId") long courseId) {
         String oauthId = (String) request.getAttribute("oauthId");
-        Map<String, String> response = professorCourseService.getCourseFileUrl(oauthId, courseId);
+        Long professorId = professorService.getProfessorIdByOauthId(oauthId);
+
+        Map<String, String> response = professorCourseService.getCourseFileUrl(professorId, courseId);
 
         return ResponseEntity
                 .status(HttpStatus.OK)

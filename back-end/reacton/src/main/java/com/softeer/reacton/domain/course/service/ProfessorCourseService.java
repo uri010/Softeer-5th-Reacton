@@ -35,7 +35,6 @@ import java.util.stream.Collectors;
 public class ProfessorCourseService {
     private final CourseRepository courseRepository;
 
-    private final ProfessorService professorService;
     private final ScheduleService scheduleService;
     private final QuestionService questionService;
     private final RequestService requestService;
@@ -47,10 +46,9 @@ public class ProfessorCourseService {
 
     private static final int MAX_RETRIES = 10;
 
-    public ActiveCourseResponse getActiveCourseByUser(String oauthId) {
+    public ActiveCourseResponse getActiveCourseByUser(Long professorId) {
         log.debug("활성화된 수업을 조회합니다.");
 
-        Long professorId = professorService.getProfessorIdByOauthId(oauthId);
         Course course = courseRepository.findTopByProfessorIdAndIsActiveTrue(professorId).orElse(null);
 
         if (course != null) {
@@ -61,10 +59,8 @@ public class ProfessorCourseService {
     }
 
     @Transactional
-    public long createCourse(String oauthId, CourseRequest request) {
+    public long createCourse(Professor professor, CourseRequest request) {
         log.debug("수업을 생성합니다.");
-
-        Professor professor = professorService.getProfessorByOauthId(oauthId);
 
         Course course = Course.create(request, professor);
 
@@ -77,10 +73,9 @@ public class ProfessorCourseService {
         return generateAccessCodeAndSave(course);
     }
 
-    public CourseDetailResponse getCourseDetail(long courseId, String oauthId) {
+    public CourseDetailResponse getCourseDetail(long courseId, Long professorId) {
         log.debug("수업 상세 정보를 조회합니다.");
 
-        Long professorId = professorService.getProfessorIdByOauthId(oauthId);
         Course course = courseRepository.findByIdAndProfessorId(courseId, professorId)
                 .orElseThrow(() -> new BaseException(CourseErrorCode.COURSE_NOT_FOUND));
 
@@ -92,10 +87,8 @@ public class ProfessorCourseService {
         return CourseDetailResponse.of(course, schedules, questions, requests);
     }
 
-    public CourseAllResponse getAllCourses(String oauthId) {
+    public CourseAllResponse getAllCourses(Long professorId) {
         log.debug("전체 수업 목록을 조회합니다.");
-
-        Long professorId = professorService.getProfessorIdByOauthId(oauthId);
 
         List<Course> allCourses = courseRepository.findCoursesWithSchedulesByProfessorId(professorId);
         List<CourseSummaryResponse> todayCoursesResponse = getTodayCoursesResponse(allCourses);
@@ -104,10 +97,9 @@ public class ProfessorCourseService {
         return CourseAllResponse.of(todayCoursesResponse, allCoursesResponse);
     }
 
-    public List<CourseSummaryResponse> searchCourses(String oauthId, String keyword) {
+    public List<CourseSummaryResponse> searchCourses(Long professorId, String keyword) {
         log.debug("검색 결과를 조회합니다.");
 
-        Long professorId = professorService.getProfessorIdByOauthId(oauthId);
         List<Course> searchCourses;
         if (keyword == null || keyword.isEmpty()) {
             searchCourses = courseRepository.findCoursesWithSchedulesByProfessorId(professorId);
@@ -121,7 +113,7 @@ public class ProfessorCourseService {
     }
 
     @Transactional
-    public void updateCourse(String oauthId, long courseId, CourseRequest request) {
+    public void updateCourse(Long professorId, long courseId, CourseRequest request) {
         log.debug("수업 데이터를 업데이트합니다. : courseId = {}", courseId);
 
         if (request == null) {
@@ -129,7 +121,6 @@ public class ProfessorCourseService {
             throw new BaseException(CourseErrorCode.COURSE_REQUEST_IS_NULL);
         }
 
-        Long professorId = professorService.getProfessorIdByOauthId(oauthId);
         Course course = courseRepository.findByIdAndProfessorId(courseId, professorId)
                 .orElseThrow(() -> new BaseException(CourseErrorCode.COURSE_NOT_FOUND));
 
@@ -149,10 +140,8 @@ public class ProfessorCourseService {
     }
 
     @Transactional
-    public void deleteCourse(String oauthId, long courseId) {
+    public void deleteCourse(Long professorId, long courseId) {
         log.debug("수업을 삭제합니다. : courseId = {}", courseId);
-
-        Long professorId = professorService.getProfessorIdByOauthId(oauthId);
 
         if (!courseRepository.existsByIdAndProfessorId(courseId, professorId)) {
             throw new BaseException(CourseErrorCode.COURSE_NOT_FOUND);
@@ -168,10 +157,9 @@ public class ProfessorCourseService {
     }
 
     @Transactional
-    public void startCourse(String oauthId, long courseId) {
+    public void startCourse(Long professorId, long courseId) {
         log.debug("수업을 시작 상태로 변경합니다. courseId = {}", courseId);
 
-        Long professorId = professorService.getProfessorIdByOauthId(oauthId);
         Course course = courseRepository.findByIdAndProfessorId(courseId, professorId)
                 .orElseThrow(() -> new BaseException(CourseErrorCode.COURSE_NOT_FOUND));
 
@@ -191,10 +179,9 @@ public class ProfessorCourseService {
     }
 
     @Transactional
-    public void closeCourse(String oauthId, long courseId) {
+    public void closeCourse(Long professorId, long courseId) {
         log.debug("수업을 종료 상태로 변경합니다. courseId = {}", courseId);
 
-        Long professorId = professorService.getProfessorIdByOauthId(oauthId);
         Course course = courseRepository.findByIdAndProfessorId(courseId, professorId)
                 .orElseThrow(() -> new BaseException(CourseErrorCode.COURSE_NOT_FOUND));
 
@@ -208,8 +195,7 @@ public class ProfessorCourseService {
         log.info("수업이 종료 상태로 변경되었습니다. courseId = {}", courseId);
     }
 
-    public Map<String, String> uploadFile(String oauthId, long courseId, MultipartFile file) {
-        Long professorId = professorService.getProfessorIdByOauthId(oauthId);
+    public Map<String, String> uploadFile(Long professorId, long courseId, MultipartFile file) {
         Course course = courseRepository.findByIdAndProfessorId(courseId, professorId)
                 .orElseThrow(() -> new BaseException(CourseErrorCode.COURSE_NOT_FOUND));
 
@@ -229,8 +215,7 @@ public class ProfessorCourseService {
         return Map.of("fileName", fileName != null ? fileName : "");
     }
 
-    public Map<String, String> getCourseFileUrl(String oauthId, long courseId) {
-        Long professorId = professorService.getProfessorIdByOauthId(oauthId);
+    public Map<String, String> getCourseFileUrl(Long professorId, long courseId) {
         Course course = courseRepository.findByIdAndProfessorId(courseId, professorId)
                 .orElseThrow(() -> new BaseException(CourseErrorCode.COURSE_NOT_FOUND));
 
