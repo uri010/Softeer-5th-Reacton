@@ -1,7 +1,7 @@
 package com.softeer.reacton.domain.question;
 
 import com.softeer.reacton.domain.course.Course;
-import com.softeer.reacton.domain.course.CourseRepository;
+import com.softeer.reacton.domain.course.StudentCourseService;
 import com.softeer.reacton.domain.course.dto.CourseQuestionResponse;
 import com.softeer.reacton.global.exception.BaseException;
 import com.softeer.reacton.global.exception.code.CourseErrorCode;
@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class QuestionService {
 
-    private final CourseRepository courseRepository;
+    private final StudentCourseService studentCourseService;
     private final QuestionRepository questionRepository;
 
     @Transactional
@@ -35,7 +35,7 @@ public class QuestionService {
 
     @Transactional
     public Question saveQuestion(String studentId, String content, Long courseId) {
-        Course course = getCourse(courseId);
+        Course course = studentCourseService.getCourseById(courseId);
         checkIfOpen(course);
 
         Question question = Question.builder()
@@ -72,11 +72,6 @@ public class QuestionService {
     private Question getQuestion(Long questionId) {
         return questionRepository.findById(questionId)
                 .orElseThrow(() -> new BaseException(QuestionErrorCode.QUESTION_NOT_FOUND));
-    }
-
-    private Course getCourse(Long courseId) {
-        return courseRepository.findById(courseId)
-                .orElseThrow(() -> new BaseException(CourseErrorCode.COURSE_NOT_FOUND));
     }
 
     private void checkIfOpen(Course course) {

@@ -55,6 +55,10 @@ public class StudentCourseService {
         return jwtTokenUtil.createStudentAccessToken(studentId, course.getId());
     }
 
+    public Course getCourseById(Long courseId) {
+        return courseRepository.findById(courseId).orElseThrow(() -> new BaseException(CourseErrorCode.COURSE_NOT_FOUND));
+    }
+
     private List<CourseScheduleResponse> getSchedulesByCourseId(Course course) {
         List<Schedule> schedules = scheduleRepository.findSchedulesByCourse(course);
 
