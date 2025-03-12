@@ -1,11 +1,11 @@
 package com.softeer.reacton.domain.professor;
 
 import com.softeer.reacton.domain.course.Course;
-import com.softeer.reacton.domain.course.CourseRepository;
+import com.softeer.reacton.domain.course.ProfessorCourseService;
 import com.softeer.reacton.domain.professor.dto.ProfessorInfoResponse;
-import com.softeer.reacton.domain.question.QuestionRepository;
-import com.softeer.reacton.domain.request.RequestRepository;
-import com.softeer.reacton.domain.schedule.ScheduleRepository;
+import com.softeer.reacton.domain.question.QuestionService;
+import com.softeer.reacton.domain.request.RequestService;
+import com.softeer.reacton.domain.schedule.ScheduleService;
 import com.softeer.reacton.global.exception.BaseException;
 import com.softeer.reacton.global.exception.code.FileErrorCode;
 import com.softeer.reacton.global.exception.code.ProfessorErrorCode;
@@ -26,10 +26,10 @@ import java.util.*;
 public class ProfessorService {
     private final JwtTokenUtil jwtTokenUtil;
     private final ProfessorRepository professorRepository;
-    private final CourseRepository courseRepository;
-    private final ScheduleRepository scheduleRepository;
-    private final QuestionRepository questionRepository;
-    private final RequestRepository requestRepository;
+    private final ProfessorCourseService professorCourseService;
+    private final ScheduleService scheduleService;
+    private final QuestionService questionService;
+    private final RequestService requestService;
     private final S3Service s3Service;
 
     private static final Set<String> ALLOWED_IMAGE_FILE_EXTENSIONS = Set.of("png", "jpg", "jpeg");
@@ -78,17 +78,17 @@ public class ProfessorService {
         if (isFileExists(professor)) {
             s3Service.deleteFile(professor.getProfileImageS3Key());
         }
-        List<Course> courses = courseRepository.findByProfessor(professor);
+        List<Course> courses = professorCourseService.getCoursesByProfessor(professor);
         for (Course course : courses) {
             if (isFileExists(course)) {
                 s3Service.deleteFile(course.getFileS3Key());
             }
-            scheduleRepository.deleteAllByCourse(course);
-            questionRepository.deleteAllByCourse(course);
-            requestRepository.deleteAllByCourse(course);
+            scheduleService.deleteAllByCourseId(course.getId());
+            questionService.deleteAllByCourseId(course.getId());
+            requestService.deleteAllByCourseId(course.getId());
         }
 
-        courseRepository.deleteByProfessor(professor);
+        professorCourseService.deleteByProfessor(professor);
         professorRepository.delete(professor);
 
         log.debug("회원 탈퇴 처리를 완료했습니다. : email = {}", professor.getEmail());
@@ -97,12 +97,8 @@ public class ProfessorService {
     public ProfessorInfoResponse getProfileInfo(String oauthId) {
         log.debug("사용자의 이름, 이메일 주소를 가져옵니다.");
 
-        Optional<Professor> existingUser = professorRepository.findByOauthId(oauthId);
-
-        Professor professor = existingUser.orElseThrow(() -> {
-            log.debug("사용자 정보를 가져오는 과정에서 발생한 에러입니다. : User does not exist.");
-            return new BaseException(ProfessorErrorCode.USER_NOT_FOUND);
-        });
+        Professor professor = professorRepository.findByOauthId(oauthId)
+                .orElseThrow(() -> new BaseException(ProfessorErrorCode.USER_NOT_FOUND));
 
         String profileImageUrl = "";
         if (isFileExists(professor)) {
@@ -114,12 +110,8 @@ public class ProfessorService {
     public Map<String, String> getProfileImage(String oauthId) {
         log.debug("사용자의 프로필 이미지를 가져옵니다.");
 
-        Optional<Professor> existingUser = professorRepository.findByOauthId(oauthId);
-
-        Professor professor = existingUser.orElseThrow(() -> {
-            log.debug("사용자 정보를 가져오는 과정에서 발생한 에러입니다. : User does not exist.");
-            return new BaseException(ProfessorErrorCode.USER_NOT_FOUND);
-        });
+        Professor professor = professorRepository.findByOauthId(oauthId)
+                .orElseThrow(() -> new BaseException(ProfessorErrorCode.USER_NOT_FOUND));
 
         String imageUrl = "";
         if (isFileExists(professor)) {

@@ -40,4 +40,8 @@ public class ScheduleService {
                         schedule.getEndTime().toString()))
                 .collect(Collectors.toList());
     }
+
+    public void saveAll(List<Schedule> newSchedules){
+        scheduleRepository.saveAll(newSchedules);
+    }
 }
