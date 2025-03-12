@@ -72,10 +72,6 @@ public class ProfessorCourseService {
 
     public long createCourse(String oauthId, CourseRequest request) {
         log.debug("수업을 생성합니다.");
-        if (request == null) {
-            log.warn("수업 생성 요청 데이터가 null입니다. : 'request' is null.");
-            throw new BaseException(CourseErrorCode.COURSE_REQUEST_IS_NULL);
-        }
 
         Professor professor = professorRepository.findByOauthId(oauthId)
                 .orElseThrow(() -> new BaseException(ProfessorErrorCode.PROFESSOR_NOT_FOUND));

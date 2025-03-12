@@ -62,7 +62,7 @@ public class ProfessorCourseController {
             description = "수업 데이터를 받아 데이터베이스 저장하고 courseId를 반환합니다.",
             responses = {@ApiResponse(responseCode = "201", description = "수업이 생성되었습니다.")}
     )
-    public ResponseEntity<SuccessResponse<Map<String, String>>> createCourse(HttpServletRequest request, @RequestBody @Valid CourseRequest courseRequest) {
+    public ResponseEntity<SuccessResponse<Map<String, String>>> createCourse(HttpServletRequest request, @RequestBody @Valid @NonNull CourseRequest courseRequest) {
         String oauthId = (String) request.getAttribute("oauthId");
 
         long courseId = professorCourseService.createCourse(oauthId, courseRequest);
