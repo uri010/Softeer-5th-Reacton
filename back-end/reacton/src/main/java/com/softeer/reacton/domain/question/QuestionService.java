@@ -53,6 +53,10 @@ public class QuestionService {
         questionRepository.deleteAllByCourseId(courseId);
     }
 
+    public void deleteCompleteByCourse(Course course) {
+        questionRepository.deleteCompleteByCourse(course);
+    }
+
     public List<CourseQuestionResponse> getQuestionsByCourseInOrder(Course course) {
         List<Question> questions = questionRepository.findNotCompleteByCourse(course);
 

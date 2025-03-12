@@ -207,7 +207,7 @@ public class ProfessorCourseService {
                 .orElseThrow( () -> new BaseException(CourseErrorCode.COURSE_NOT_FOUND));
 
         course.deactivate();
-        questionRepository.deleteCompleteByCourse(course);
+        questionService.deleteCompleteByCourse(course);
 
         log.debug("SSE 서버에 수업 종료 메시지 전송을 요청합니다.");
         SseMessage<Void> sseMessage = new SseMessage<>("COURSE_CLOSED", null);
