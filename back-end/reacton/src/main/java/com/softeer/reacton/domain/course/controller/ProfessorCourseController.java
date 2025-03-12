@@ -1,6 +1,7 @@
 package com.softeer.reacton.domain.course.controller;
 
-import com.softeer.reacton.domain.course.service.ProfessorCourseService;
+import com.softeer.reacton.domain.course.service.ProfessorCourseQueryService;
+import com.softeer.reacton.domain.course.service.ProfessorCourseCommandService;
 import com.softeer.reacton.domain.course.dto.*;
 import com.softeer.reacton.domain.professor.entity.Professor;
 import com.softeer.reacton.domain.professor.service.ProfessorService;
@@ -30,7 +31,8 @@ import java.util.Map;
 @Tag(name = "Professor Course API", description = "교수 수업 관련 API")
 @RequiredArgsConstructor
 public class ProfessorCourseController {
-    private final ProfessorCourseService professorCourseService;
+    private final ProfessorCourseCommandService professorCourseCommandService;
+    private final ProfessorCourseQueryService professorCourseQueryService;
     private final ProfessorService professorService;
 
     @Value("${frontend.base-url}")
@@ -48,7 +50,7 @@ public class ProfessorCourseController {
     public ResponseEntity<?> getActiveCourses(HttpServletRequest request) {
         String oauthId = (String) request.getAttribute("oauthId");
         Long professorId = professorService.getProfessorIdByOauthId(oauthId);
-        ActiveCourseResponse activeCourse = professorCourseService.getActiveCourseByUser(professorId);
+        ActiveCourseResponse activeCourse = professorCourseQueryService.getActiveCourseByUser(professorId);
 
         if (activeCourse != null) {
             log.debug("활성화된 수업이 존재합니다. : courseId = {}", activeCourse.getId());
@@ -72,7 +74,7 @@ public class ProfessorCourseController {
         String oauthId = (String) request.getAttribute("oauthId");
         Professor professor = professorService.getProfessorByOauthId(oauthId);
 
-        long courseId = professorCourseService.createCourse(professor, courseRequest);
+        long courseId = professorCourseCommandService.createCourse(professor, courseRequest);
 
         Map<String, String> response = new HashMap<>();
         response.put("courseId", String.valueOf(courseId));
@@ -100,7 +102,7 @@ public class ProfessorCourseController {
 
         String oauthId = (String) request.getAttribute("oauthId");
         Long professorId = professorService.getProfessorIdByOauthId(oauthId);
-        CourseDetailResponse response = professorCourseService.getCourseDetail(courseId, professorId);
+        CourseDetailResponse response = professorCourseQueryService.getCourseDetail(courseId, professorId);
 
         log.info("수업 상세 정보 조회를 완료했습니다.");
         return ResponseEntity
@@ -122,7 +124,7 @@ public class ProfessorCourseController {
 
         String oauthId = (String) request.getAttribute("oauthId");
         Long professorId = professorService.getProfessorIdByOauthId(oauthId);
-        CourseAllResponse response = professorCourseService.getAllCourses(professorId);
+        CourseAllResponse response = professorCourseQueryService.getAllCourses(professorId);
 
         log.info("전체 수업 정보 조회를 완료했습니다.");
         return ResponseEntity
@@ -147,7 +149,7 @@ public class ProfessorCourseController {
         String oauthId = (String) request.getAttribute("oauthId");
         Long professorId = professorService.getProfessorIdByOauthId(oauthId);
 
-        List<CourseSummaryResponse> response = professorCourseService.searchCourses(professorId, keyword);
+        List<CourseSummaryResponse> response = professorCourseQueryService.searchCourses(professorId, keyword);
 
         log.info("검색을 완료했습니다.");
         return ResponseEntity
@@ -168,7 +170,7 @@ public class ProfessorCourseController {
         String oauthId = (String) request.getAttribute("oauthId");
         Long professorId = professorService.getProfessorIdByOauthId(oauthId);
 
-        professorCourseService.updateCourse(professorId, courseId, courseRequest);
+        professorCourseCommandService.updateCourse(professorId, courseId, courseRequest);
 
         Map<String, String> response = new HashMap<>();
         response.put("courseId", String.valueOf(courseId));
@@ -188,7 +190,7 @@ public class ProfessorCourseController {
         String oauthId = (String) request.getAttribute("oauthId");
         Long professorId = professorService.getProfessorIdByOauthId(oauthId);
 
-        professorCourseService.deleteCourse(professorId, courseId);
+        professorCourseCommandService.deleteCourse(professorId, courseId);
 
         return ResponseEntity.noContent().build();
     }
@@ -203,7 +205,7 @@ public class ProfessorCourseController {
         String oauthId = (String) request.getAttribute("oauthId");
         Long professorId = professorService.getProfessorIdByOauthId(oauthId);
 
-        professorCourseService.startCourse(professorId, courseId);
+        professorCourseCommandService.startCourse(professorId, courseId);
 
         return ResponseEntity.noContent().build();
     }
@@ -218,7 +220,7 @@ public class ProfessorCourseController {
         String oauthId = (String) request.getAttribute("oauthId");
         Long professorId = professorService.getProfessorIdByOauthId(oauthId);
 
-        professorCourseService.closeCourse(professorId, courseId);
+        professorCourseCommandService.closeCourse(professorId, courseId);
 
         return ResponseEntity.noContent().build();
     }
@@ -236,7 +238,7 @@ public class ProfessorCourseController {
         String oauthId = (String) request.getAttribute("oauthId");
         Long professorId = professorService.getProfessorIdByOauthId(oauthId);
 
-        Map<String, String> response = professorCourseService.uploadFile(professorId, courseId, file);
+        Map<String, String> response = professorCourseCommandService.uploadFile(professorId, courseId, file);
 
         return ResponseEntity
                 .status(HttpStatus.OK)
@@ -256,7 +258,7 @@ public class ProfessorCourseController {
         String oauthId = (String) request.getAttribute("oauthId");
         Long professorId = professorService.getProfessorIdByOauthId(oauthId);
 
-        Map<String, String> response = professorCourseService.getCourseFileUrl(professorId, courseId);
+        Map<String, String> response = professorCourseCommandService.getCourseFileUrl(professorId, courseId);
 
         return ResponseEntity
                 .status(HttpStatus.OK)

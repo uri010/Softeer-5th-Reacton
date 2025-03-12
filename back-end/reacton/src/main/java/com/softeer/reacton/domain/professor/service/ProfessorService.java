@@ -1,7 +1,8 @@
 package com.softeer.reacton.domain.professor.service;
 
 import com.softeer.reacton.domain.course.entity.Course;
-import com.softeer.reacton.domain.course.service.ProfessorCourseService;
+import com.softeer.reacton.domain.course.service.ProfessorCourseQueryService;
+import com.softeer.reacton.domain.course.service.ProfessorCourseCommandService;
 import com.softeer.reacton.domain.file.CourseFileService;
 import com.softeer.reacton.domain.file.ProfessorFileService;
 import com.softeer.reacton.domain.professor.dto.ProfessorInfoResponse;
@@ -29,7 +30,8 @@ import java.util.*;
 public class ProfessorService {
     private final JwtTokenUtil jwtTokenUtil;
     private final ProfessorRepository professorRepository;
-    private final ProfessorCourseService professorCourseService;
+    private final ProfessorCourseCommandService professorCourseCommandService;
+    private final ProfessorCourseQueryService professorCourseQueryService;
     private final ScheduleService scheduleService;
     private final QuestionService questionService;
     private final RequestService requestService;
@@ -76,7 +78,7 @@ public class ProfessorService {
 
         professorFileService.deleteProfileImageIfExists(professor);
 
-        List<Course> courses = professorCourseService.getCoursesByProfessor(professor);
+        List<Course> courses = professorCourseQueryService.getCoursesByProfessor(professor);
         for (Course course : courses) {
             if (courseFileService.isFileExists(course)) {
                 courseFileService.deleteFileByS3key(course.getFileS3Key());
@@ -86,7 +88,7 @@ public class ProfessorService {
             requestService.deleteAllByCourseId(course.getId());
         }
 
-        professorCourseService.deleteByProfessor(professor);
+        professorCourseCommandService.deleteByProfessor(professor);
         professorRepository.delete(professor);
 
         log.debug("회원 탈퇴 처리를 완료했습니다. : email = {}", professor.getEmail());
