@@ -1,13 +1,16 @@
-package com.softeer.reacton.domain.request;
+package com.softeer.reacton.domain.request.service;
 
-import com.softeer.reacton.domain.course.Course;
-import com.softeer.reacton.domain.course.StudentCourseService;
+import com.softeer.reacton.domain.course.entity.Course;
+import com.softeer.reacton.domain.course.service.StudentCourseService;
 import com.softeer.reacton.domain.course.dto.CourseRequestResponse;
+import com.softeer.reacton.domain.request.entity.Request;
+import com.softeer.reacton.domain.request.repository.RequestRepository;
+import com.softeer.reacton.domain.request.enums.RequestType;
 import com.softeer.reacton.global.exception.BaseException;
 import com.softeer.reacton.global.exception.code.CourseErrorCode;
 import com.softeer.reacton.global.exception.code.RequestErrorCode;
 import jakarta.transaction.Transactional;
-import java.util.ArrayList;
+
 import java.util.List;
 import java.util.stream.Collectors;
 
