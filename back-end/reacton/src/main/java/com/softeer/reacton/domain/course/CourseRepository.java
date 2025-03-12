@@ -51,7 +51,8 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
 
     void deleteByProfessor(Professor professor);
 
-    Optional<Course> findTopByProfessorAndIsActiveTrue(Professor professor);
+    @Query("SELECT c FROM Course c WHERE c.professor.id = :professorId AND c.isActive = true ORDER BY c.id DESC LIMIT 1")
+    Optional<Course> findTopByProfessorIdAndIsActiveTrue(@Param("professorId") Long professorId);
 
     @Query("SELECT c FROM Course c WHERE c.professor = :professor AND c.isActive = true")
     List<Course> findIsActiveCoursesByProfessor(@Param("professor") Professor professor);

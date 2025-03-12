@@ -9,7 +9,6 @@ import com.softeer.reacton.domain.question.QuestionRepository;
 import com.softeer.reacton.domain.question.QuestionService;
 import com.softeer.reacton.domain.request.Request;
 import com.softeer.reacton.domain.request.RequestConstants;
-import com.softeer.reacton.domain.request.RequestRepository;
 import com.softeer.reacton.domain.request.RequestService;
 import com.softeer.reacton.domain.schedule.Schedule;
 import com.softeer.reacton.domain.schedule.ScheduleRepository;
@@ -61,10 +60,9 @@ public class ProfessorCourseService {
 
     public ActiveCourseResponse getActiveCourseByUser(String oauthId) {
         log.debug("활성화된 수업을 조회합니다.");
-        Professor professor = professorRepository.findByOauthId(oauthId)
-                .orElseThrow(() -> new BaseException(ProfessorErrorCode.PROFESSOR_NOT_FOUND));
+        Long professorId = professorService.findProfessorIdByOauthId(oauthId);
+        Course course = courseRepository.findTopByProfessorIdAndIsActiveTrue(professorId).orElse(null);
 
-        Course course = courseRepository.findTopByProfessorAndIsActiveTrue(professor).orElse(null);
         if (course != null) {
             List<CourseScheduleResponse> schedules = getSchedulesByCourseInOrder(course);
             return ActiveCourseResponse.of(course, schedules);
