@@ -11,6 +11,10 @@ public interface RequestRepository extends JpaRepository<Request, Long> {
     void deleteAllByCourse(Course course);
 
     @Modifying
+    @Query("DELETE FROM Request r WHERE r.course.id = :courseId")
+    void deleteAllByCourseId(Long courseId);
+
+    @Modifying
     @Transactional
     @Query("UPDATE Request r " +
             "SET r.count = r.count + 1 " +

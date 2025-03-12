@@ -2,6 +2,7 @@ package com.softeer.reacton.domain.schedule;
 
 import com.softeer.reacton.domain.course.Course;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
@@ -21,4 +22,8 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
     List<Schedule> findSchedulesByCourse(Course course);
 
     void deleteAllByCourse(Course course);
+
+    @Modifying
+    @Query("DELETE FROM Schedule s WHERE s.course.id = :courseId")
+    void deleteAllByCourseId(Long courseId);
 }
