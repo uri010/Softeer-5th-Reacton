@@ -48,12 +48,9 @@ public class RequestService {
     }
 
     public List<Request> createRequests(Course course) {
-        List<Request> requests = new ArrayList<>();
-        for (String requestType : RequestConstants.REQUEST_TYPES) {
-            Request request = Request.create(requestType, course);
-            requests.add(request);
-        }
-        return requests;
+        return RequestType.getRequestTypes().stream()
+                .map(requestType -> Request.create(requestType, course))
+                .collect(Collectors.toList());
     }
 
     public List<CourseRequestResponse> getRequestsByCourseInOrder(Course course) {
