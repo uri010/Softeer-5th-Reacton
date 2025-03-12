@@ -9,7 +9,6 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 
 public interface RequestRepository extends JpaRepository<Request, Long> {
-    void deleteAllByCourse(Course course);
 
     @Modifying
     @Query("DELETE FROM Request r WHERE r.course.id = :courseId")

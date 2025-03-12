@@ -22,8 +22,6 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
             "ELSE 8 END, s.startTime ASC")
     List<Schedule> findSchedulesByCourse(Course course);
 
-    void deleteAllByCourse(Course course);
-
     @Modifying
     @Query("DELETE FROM Schedule s WHERE s.course.id = :courseId")
     void deleteAllByCourseId(Long courseId);

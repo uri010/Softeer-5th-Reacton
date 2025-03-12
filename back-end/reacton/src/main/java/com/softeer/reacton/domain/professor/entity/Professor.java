@@ -22,7 +22,7 @@ public class Professor {
     @Column(nullable = false, length = 60)
     private String name;
 
-    @Column(unique = true, length = 255)
+    @Column(unique = true)
     private String oauthId;
 
     @Column
