@@ -67,6 +67,10 @@ public class RequestService {
                 .collect(Collectors.toList());
     }
 
+    public void resetCountByCourseId(Long courseId) {
+        requestRepository.resetCountByCourseId(courseId);
+    }
+
     private Course getCourse(Long courseId) {
         return courseRepository.findById(courseId)
                 .orElseThrow(() -> new BaseException(CourseErrorCode.COURSE_NOT_FOUND));

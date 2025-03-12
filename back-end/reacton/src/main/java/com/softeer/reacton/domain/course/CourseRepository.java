@@ -1,6 +1,7 @@
 package com.softeer.reacton.domain.course;
 
 import com.softeer.reacton.domain.professor.Professor;
+import jakarta.transaction.Transactional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -61,8 +62,15 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     @Query("DELETE FROM Course c WHERE c.id = :courseId")
     void deleteByCourseId(@Param("courseId") Long courseId);
 
+    @Query("SELECT c FROM Course c WHERE c.id = :courseId AND c.professor.id = :professorId")
     Optional<Course> findByIdAndProfessorId(long courseId, Long professorId);
 
     @Query("SELECT COUNT(c) > 0 FROM Course c WHERE c.id = :courseId AND c.professor.id = :professorId")
     boolean existsByIdAndProfessorId(long courseId, Long professorId);
+
+    @Transactional
+    @Modifying
+    @Query("UPDATE Course c SET c.isActive = false WHERE c.professor.id = :professorId AND c.id <> :courseId")
+    void deactivateOtherCourses(@Param("professorId") Long professorId, @Param("courseId") Long courseId);
+
 }

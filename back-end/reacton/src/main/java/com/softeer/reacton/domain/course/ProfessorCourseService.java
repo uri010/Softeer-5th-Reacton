@@ -14,7 +14,6 @@ import com.softeer.reacton.domain.schedule.ScheduleService;
 import com.softeer.reacton.global.exception.BaseException;
 import com.softeer.reacton.global.exception.code.CourseErrorCode;
 import com.softeer.reacton.global.exception.code.FileErrorCode;
-import com.softeer.reacton.global.exception.code.ProfessorErrorCode;
 import com.softeer.reacton.global.s3.S3Service;
 import com.softeer.reacton.global.sse.SseMessageSender;
 import com.softeer.reacton.global.sse.dto.SseMessage;
@@ -176,9 +175,9 @@ public class ProfessorCourseService {
         log.info("수업이 삭제되었습니다. : courseId = {}", courseId);
     }
 
+    @Transactional
     public void startCourse(String oauthId, long courseId) {
         log.debug("수업을 시작 상태로 변경합니다. courseId = {}", courseId);
-
 
         Long professorId = professorService.getProfessorIdByOauthId(oauthId);
         Course course = courseRepository.findByIdAndProfessorId(courseId, professorId)
@@ -187,9 +186,14 @@ public class ProfessorCourseService {
         boolean wasActive = course.isActive();
         log.debug("시작을 요청한 수업의 활성화 상태입니다. : isActive = {}", wasActive);
 
-        deactivateOtherCourses(oauthId, courseId);
+        courseRepository.deactivateOtherCourses(professorId, courseId);
+
         if( !wasActive ) {
-            professorCourseTransactionService.activateCourse(course);
+            questionService.deleteAllByCourseId(course.getId());
+            requestService.resetCountByCourseId(course.getId());
+
+            course.activate();
+            courseRepository.save(course);
         }
         log.info("수업이 시작 상태로 변경되었습니다. courseId = {}", courseId);
     }
@@ -246,19 +250,6 @@ public class ProfessorCourseService {
             return Map.of("fileUrl", s3Url);
         }
         return Map.of("fileUrl", "");
-    }
-
-    private void deactivateOtherCourses(String oauthId, long courseId) {
-        Long professorId = professorService.getProfessorIdByOauthId(oauthId);
-        List<Course> activeCourses = courseRepository.findIsActiveCoursesByProfessorId(professorId);
-
-        for (Course course : activeCourses) {
-            if (course.getId() != courseId) {
-                professorCourseTransactionService.closeCourse(course);
-            }
-        }
-
-        courseRepository.saveAll(activeCourses);
     }
 
     private List<CourseScheduleResponse> getSchedulesByCourse(Course course) {
