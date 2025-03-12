@@ -166,7 +166,7 @@ public class ProfessorService {
         return Map.of("imageUrl", imageUrl);
     }
 
-    public Long findProfessorIdByOauthId(String oauthId) {
+    public Long getProfessorIdByOauthId(String oauthId) {
         return professorRepository.findProfessorIdByOauthId(oauthId)
             .orElseThrow(() -> new BaseException(ProfessorErrorCode.PROFESSOR_NOT_FOUND));
     }

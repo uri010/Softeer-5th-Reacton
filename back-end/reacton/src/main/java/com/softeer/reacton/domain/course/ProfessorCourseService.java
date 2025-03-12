@@ -60,7 +60,7 @@ public class ProfessorCourseService {
 
     public ActiveCourseResponse getActiveCourseByUser(String oauthId) {
         log.debug("활성화된 수업을 조회합니다.");
-        Long professorId = professorService.findProfessorIdByOauthId(oauthId);
+        Long professorId = professorService.getProfessorIdByOauthId(oauthId);
         Course course = courseRepository.findTopByProfessorIdAndIsActiveTrue(professorId).orElse(null);
 
         if (course != null) {
