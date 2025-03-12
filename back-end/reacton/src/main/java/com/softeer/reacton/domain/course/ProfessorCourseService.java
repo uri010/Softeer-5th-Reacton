@@ -63,7 +63,7 @@ public class ProfessorCourseService {
         Course course = courseRepository.findTopByProfessorIdAndIsActiveTrue(professorId).orElse(null);
 
         if (course != null) {
-            List<CourseScheduleResponse> schedules = getSchedulesByCourseInOrder(course);
+            List<CourseScheduleResponse> schedules = scheduleService.getSchedulesByCourseInOrder(course);
             return ActiveCourseResponse.of(course, schedules);
         }
         return null;
@@ -91,9 +91,9 @@ public class ProfessorCourseService {
 
         Course course = getCourseByProfessor(oauthId, courseId);
 
-        List<CourseScheduleResponse> schedules = getSchedulesByCourseInOrder(course);
-        List<CourseQuestionResponse> questions = getQuestionsByCourseInOrder(course);
-        List<CourseRequestResponse> requests = getRequestsByCourseInOrder(course);
+        List<CourseScheduleResponse> schedules = scheduleService.getSchedulesByCourseInOrder(course);
+        List<CourseQuestionResponse> questions = questionService.getQuestionsByCourseInOrder(course);
+        List<CourseRequestResponse> requests = requestService.getRequestsByCourseInOrder(course);
 
         log.debug("수업 상세 정보를 가져오는 데 성공했습니다. : courseId = {}", courseId);
         return CourseDetailResponse.of(course, schedules, questions, requests);
@@ -273,40 +273,6 @@ public class ProfessorCourseService {
                         schedule.getDay(),
                         schedule.getStartTime().toString(),
                         schedule.getEndTime().toString()))
-                .collect(Collectors.toList());
-    }
-
-    private List<CourseScheduleResponse> getSchedulesByCourseInOrder(Course course) {
-        List<Schedule> schedules = scheduleRepository.findSchedulesByCourse(course);
-
-        return schedules.stream()
-                .map(schedule -> new CourseScheduleResponse(
-                        schedule.getDay(),
-                        schedule.getStartTime().toString(),
-                        schedule.getEndTime().toString()))
-                .collect(Collectors.toList());
-    }
-
-    private List<CourseQuestionResponse> getQuestionsByCourseInOrder(Course course) {
-        List<Question> questions = questionRepository.findNotCompleteByCourse(course);
-
-        return questions.stream()
-                .map(question -> new CourseQuestionResponse(
-                        question.getId(),
-                        question.getCreatedAt(),
-                        question.getContent()
-                ))
-                .collect(Collectors.toList());
-    }
-
-    private List<CourseRequestResponse> getRequestsByCourseInOrder(Course course) {
-        List<Request> requests = course.getRequests();
-
-        return requests.stream()
-                .map(request -> new CourseRequestResponse(
-                        request.getType(),
-                        request.getCount()
-                ))
                 .collect(Collectors.toList());
     }
 

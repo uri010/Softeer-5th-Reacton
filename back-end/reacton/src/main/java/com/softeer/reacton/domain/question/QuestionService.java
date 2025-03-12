@@ -2,6 +2,7 @@ package com.softeer.reacton.domain.question;
 
 import com.softeer.reacton.domain.course.Course;
 import com.softeer.reacton.domain.course.CourseRepository;
+import com.softeer.reacton.domain.course.dto.CourseQuestionResponse;
 import com.softeer.reacton.global.exception.BaseException;
 import com.softeer.reacton.global.exception.code.CourseErrorCode;
 import com.softeer.reacton.global.exception.code.QuestionErrorCode;
@@ -9,6 +10,9 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -47,6 +51,18 @@ public class QuestionService {
     @Transactional
     public void deleteAllByCourseId(Long courseId) {
         questionRepository.deleteAllByCourseId(courseId);
+    }
+
+    public List<CourseQuestionResponse> getQuestionsByCourseInOrder(Course course) {
+        List<Question> questions = questionRepository.findNotCompleteByCourse(course);
+
+        return questions.stream()
+                .map(question -> new CourseQuestionResponse(
+                        question.getId(),
+                        question.getCreatedAt(),
+                        question.getContent()
+                ))
+                .collect(Collectors.toList());
     }
 
     private Question getQuestion(Long questionId) {

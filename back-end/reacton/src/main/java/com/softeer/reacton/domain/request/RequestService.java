@@ -2,12 +2,15 @@ package com.softeer.reacton.domain.request;
 
 import com.softeer.reacton.domain.course.Course;
 import com.softeer.reacton.domain.course.CourseRepository;
+import com.softeer.reacton.domain.course.dto.CourseRequestResponse;
 import com.softeer.reacton.global.exception.BaseException;
 import com.softeer.reacton.global.exception.code.CourseErrorCode;
 import com.softeer.reacton.global.exception.code.RequestErrorCode;
 import jakarta.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
+
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -51,6 +54,17 @@ public class RequestService {
             requests.add(request);
         }
         return requests;
+    }
+
+    public List<CourseRequestResponse> getRequestsByCourseInOrder(Course course) {
+        List<Request> requests = course.getRequests();
+
+        return requests.stream()
+                .map(request -> new CourseRequestResponse(
+                        request.getType(),
+                        request.getCount()
+                ))
+                .collect(Collectors.toList());
     }
 
     private Course getCourse(Long courseId) {
