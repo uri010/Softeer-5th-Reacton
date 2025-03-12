@@ -166,6 +166,11 @@ public class ProfessorService {
         return Map.of("imageUrl", imageUrl);
     }
 
+    public Long findProfessorIdByOauthId(String oauthId) {
+        return professorRepository.findProfessorIdByOauthId(oauthId)
+            .orElseThrow(() -> new BaseException(ProfessorErrorCode.PROFESSOR_NOT_FOUND));
+    }
+
     private boolean validateProfileImage(MultipartFile file) {
         if (file == null || file.isEmpty()) {
             return false;
