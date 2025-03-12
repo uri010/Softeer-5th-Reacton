@@ -16,7 +16,7 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
 
     @Query("SELECT DISTINCT c FROM Course c " +
             "LEFT JOIN FETCH c.schedules s " +
-            "WHERE c.professor = :professor " +
+            "WHERE c.professor.id = :professorId " +
             "ORDER BY c.createdAt DESC, " +
             "CASE s.day " +
             "WHEN '월' THEN 1 " +
@@ -27,11 +27,11 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
             "WHEN '토' THEN 6 " +
             "WHEN '일' THEN 7 " +
             "ELSE 8 END")
-    List<Course> findCoursesWithSchedulesByProfessor(@Param("professor") Professor professor);
+    List<Course> findCoursesWithSchedulesByProfessorId(@Param("professorId") Long professorId);
 
     @Query("SELECT DISTINCT c FROM Course c " +
             "LEFT JOIN FETCH c.schedules s " +
-            "WHERE c.professor = :professor " +
+            "WHERE c.professor.id = :professorId " +
             "AND (LOWER(c.name) LIKE :keyword ESCAPE '\\' OR LOWER(c.courseCode) LIKE :keyword ESCAPE '\\') " +
             "ORDER BY c.createdAt DESC, " +
             "CASE s.day " +
@@ -43,7 +43,7 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
             "WHEN '토' THEN 6 " +
             "WHEN '일' THEN 7 " +
             "ELSE 8 END")
-    List<Course> findCoursesWithSchedulesByProfessorAndKeyword(@Param("professor") Professor professor, @Param("keyword") String keyword);
+    List<Course> findCoursesWithSchedulesByProfessorAndKeyword(@Param("professorId") Long professorId, @Param("keyword") String keyword);
 
     Optional<Course> findByAccessCode(int accessCode);
 
@@ -54,13 +54,15 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     @Query("SELECT c FROM Course c WHERE c.professor.id = :professorId AND c.isActive = true ORDER BY c.id DESC LIMIT 1")
     Optional<Course> findTopByProfessorIdAndIsActiveTrue(@Param("professorId") Long professorId);
 
-    @Query("SELECT c FROM Course c WHERE c.professor = :professor AND c.isActive = true")
-    List<Course> findIsActiveCoursesByProfessor(@Param("professor") Professor professor);
-
-    @Query("SELECT c.professor.id FROM Course c WHERE c.id = :courseId")
-    Long findProfessorIdById(@Param("courseId") Long courseId);
+    @Query("SELECT c FROM Course c WHERE c.professor.id = :professorId AND c.isActive = true")
+    List<Course> findIsActiveCoursesByProfessorId(@Param("professorId") Long professorId);
 
     @Modifying
     @Query("DELETE FROM Course c WHERE c.id = :courseId")
     void deleteByCourseId(@Param("courseId") Long courseId);
+
+    Optional<Course> findByIdAndProfessorId(long courseId, Long professorId);
+
+    @Query("SELECT COUNT(c) > 0 FROM Course c WHERE c.id = :courseId AND c.professor.id = :professorId")
+    boolean existsByIdAndProfessorId(long courseId, Long professorId);
 }
