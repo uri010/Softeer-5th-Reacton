@@ -44,6 +44,11 @@ public class QuestionService {
         return questionRepository.save(question);
     }
 
+    @Transactional
+    public void deleteAllByCourseId(Long courseId) {
+        questionRepository.deleteAllByCourseId(courseId);
+    }
+
     private Question getQuestion(Long questionId) {
         return questionRepository.findById(questionId)
                 .orElseThrow(() -> new BaseException(QuestionErrorCode.QUESTION_NOT_FOUND));

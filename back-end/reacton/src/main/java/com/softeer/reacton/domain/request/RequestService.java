@@ -37,6 +37,11 @@ public class RequestService {
         }
     }
 
+    @Transactional
+    public void deleteAllByCourseId(Long courseId) {
+        requestRepository.deleteAllByCourseId(courseId);
+    }
+
     private Course getCourse(Long courseId) {
         return courseRepository.findById(courseId)
                 .orElseThrow(() -> new BaseException(CourseErrorCode.COURSE_NOT_FOUND));
