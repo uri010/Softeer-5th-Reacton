@@ -3,13 +3,17 @@ package com.softeer.reacton.domain.course;
 import com.softeer.reacton.domain.course.dto.*;
 import com.softeer.reacton.domain.professor.Professor;
 import com.softeer.reacton.domain.professor.ProfessorRepository;
+import com.softeer.reacton.domain.professor.ProfessorService;
 import com.softeer.reacton.domain.question.Question;
 import com.softeer.reacton.domain.question.QuestionRepository;
+import com.softeer.reacton.domain.question.QuestionService;
 import com.softeer.reacton.domain.request.Request;
 import com.softeer.reacton.domain.request.RequestConstants;
 import com.softeer.reacton.domain.request.RequestRepository;
+import com.softeer.reacton.domain.request.RequestService;
 import com.softeer.reacton.domain.schedule.Schedule;
 import com.softeer.reacton.domain.schedule.ScheduleRepository;
+import com.softeer.reacton.domain.schedule.ScheduleService;
 import com.softeer.reacton.global.exception.BaseException;
 import com.softeer.reacton.global.exception.code.CourseErrorCode;
 import com.softeer.reacton.global.exception.code.FileErrorCode;
@@ -34,11 +38,17 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class ProfessorCourseService {
+
     private final ProfessorRepository professorRepository;
     private final CourseRepository courseRepository;
     private final ScheduleRepository scheduleRepository;
     private final QuestionRepository questionRepository;
-    private final RequestRepository requestRepository;
+
+    private final ProfessorService professorService;
+    private final ScheduleService scheduleService;
+    private final QuestionService questionService;
+    private final RequestService requestService;
+
     private final ProfessorCourseTransactionService professorCourseTransactionService;
     private final S3Service s3Service;
     private final SecureRandom secureRandom = new SecureRandom();
@@ -150,12 +160,21 @@ public class ProfessorCourseService {
     public void deleteCourse(String oauthId, long courseId) {
         log.debug("수업을 삭제합니다. : courseId = {}", courseId);
 
-        Course course = getCourseByProfessor(oauthId, courseId);
+        Long professorIdByOauth = professorService.findProfessorIdByOauthId(oauthId);
+        Long professorIdByCourse = courseRepository.findProfessorIdById(courseId);
 
-        scheduleRepository.deleteAllByCourse(course);
-        questionRepository.deleteAllByCourse(course);
-        requestRepository.deleteAllByCourse(course);
-        courseRepository.delete(course);
+        if (professorIdByCourse == null) {
+            throw new BaseException(ProfessorErrorCode.PROFESSOR_NOT_FOUND);
+        }
+        if (!professorIdByOauth.equals(professorIdByCourse)) {
+            throw new BaseException(ProfessorErrorCode.UNAUTHORIZED_PROFESSOR);
+        }
+
+        scheduleService.deleteAllByCourseId(courseId);
+        questionService.deleteAllByCourseId(courseId);
+        requestService.deleteAllByCourseId(courseId);
+
+        courseRepository.deleteByCourseId(courseId);
 
         log.info("수업이 삭제되었습니다. : courseId = {}", courseId);
     }
