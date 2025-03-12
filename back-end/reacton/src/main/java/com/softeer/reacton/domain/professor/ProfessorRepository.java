@@ -20,4 +20,8 @@ public interface ProfessorRepository extends JpaRepository<Professor, Long> {
     @Transactional
     @Query("UPDATE Professor p SET p.profileImageFileName = :profileImageFileName, p.profileImageS3Key = :profileImageS3Key  WHERE p.oauthId = :oauthId")
     int updateImage(@Param("oauthId") String oauthId, @Param("profileImageFileName") String profileImageFileName, @Param("profileImageS3Key") String profileImageS3Key);
+
+
+    @Query("SELECT p.id FROM Professor p WHERE p.oauthId = :oauthId")
+    Optional<Long> findProfessorIdByOauthId(@Param("oauthId") String oauthId);
 }
