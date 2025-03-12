@@ -1,7 +1,7 @@
 package com.softeer.reacton.domain.request;
 
 import com.softeer.reacton.domain.course.Course;
-import com.softeer.reacton.domain.course.CourseRepository;
+import com.softeer.reacton.domain.course.StudentCourseService;
 import com.softeer.reacton.domain.course.dto.CourseRequestResponse;
 import com.softeer.reacton.global.exception.BaseException;
 import com.softeer.reacton.global.exception.code.CourseErrorCode;
@@ -21,12 +21,12 @@ import org.springframework.stereotype.Service;
 @AllArgsConstructor
 public class RequestService {
 
-    private final CourseRepository courseRepository;
+    private final StudentCourseService studentCourseService;
     private final RequestRepository requestRepository;
 
     @Transactional
     public void incrementRequestCount(String content, Long courseId) {
-        Course course = getCourse(courseId);
+        Course course = studentCourseService.getCourseById(courseId);
         checkIfOpen(course);
 
         log.debug("요청을 저장합니다.");
@@ -69,11 +69,6 @@ public class RequestService {
 
     public void resetCountByCourseId(Long courseId) {
         requestRepository.resetCountByCourseId(courseId);
-    }
-
-    private Course getCourse(Long courseId) {
-        return courseRepository.findById(courseId)
-                .orElseThrow(() -> new BaseException(CourseErrorCode.COURSE_NOT_FOUND));
     }
 
     private void checkIfOpen(Course course) {
