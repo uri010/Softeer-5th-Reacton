@@ -1,7 +1,7 @@
 package com.softeer.reacton.global.oauth;
 
-import com.softeer.reacton.domain.professor.Professor;
-import com.softeer.reacton.domain.professor.ProfessorRepository;
+import com.softeer.reacton.domain.professor.entity.Professor;
+import com.softeer.reacton.domain.professor.repository.ProfessorRepository;
 import com.softeer.reacton.global.exception.BaseException;
 import com.softeer.reacton.global.exception.code.GlobalErrorCode;
 import com.softeer.reacton.global.exception.code.OAuthErrorCode;
