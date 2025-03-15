@@ -13,6 +13,8 @@ import com.softeer.reacton.global.exception.code.CourseErrorCode;
 import com.softeer.reacton.global.util.TimeUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalTime;
@@ -37,11 +39,12 @@ public class ProfessorCourseQueryService {
     public ActiveCourseResponse getActiveCourseByUser(Long professorId) {
         log.debug("활성화된 수업을 조회합니다.");
 
-        Course course = courseRepository.findTopByProfessorIdAndIsActiveTrue(professorId).orElse(null);
+        Pageable pageable = PageRequest.of(0, 1);
+        List<Course> course = courseRepository.findLatestActiveCourseByProfessorId(professorId, pageable);
 
-        if (course != null) {
-            List<CourseScheduleResponse> schedules = scheduleService.getSchedulesByCourseInOrder(course);
-            return ActiveCourseResponse.of(course, schedules);
+        if (!course.isEmpty()) {
+            List<CourseScheduleResponse> schedules = scheduleService.getSchedulesByCourseInOrder(course.get(0));
+            return ActiveCourseResponse.of(course.get(0), schedules);
         }
         return null;
     }

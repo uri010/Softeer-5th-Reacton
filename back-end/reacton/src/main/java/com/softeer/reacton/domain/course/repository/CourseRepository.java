@@ -3,6 +3,7 @@ package com.softeer.reacton.domain.course.repository;
 import com.softeer.reacton.domain.course.entity.Course;
 import com.softeer.reacton.domain.professor.entity.Professor;
 import jakarta.transaction.Transactional;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -53,8 +54,8 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
 
     void deleteByProfessor(Professor professor);
 
-    @Query("SELECT c FROM Course c WHERE c.professor.id = :professorId AND c.isActive = true ORDER BY c.id DESC LIMIT 1")
-    Optional<Course> findTopByProfessorIdAndIsActiveTrue(@Param("professorId") Long professorId);
+    @Query("SELECT c FROM Course c WHERE c.professor.id = :professorId AND c.isActive = true ORDER BY c.id DESC")
+    List<Course> findLatestActiveCourseByProfessorId(@Param("professorId") Long professorId, Pageable pageable);
 
     @Modifying
     @Query("DELETE FROM Course c WHERE c.id = :courseId")
