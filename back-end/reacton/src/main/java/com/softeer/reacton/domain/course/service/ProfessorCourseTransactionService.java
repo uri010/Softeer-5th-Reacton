@@ -21,25 +21,37 @@ public class ProfessorCourseTransactionService {
 
     @Transactional
     public long saveCourse(Course course) {
+        log.info("[Save Course Start] courseId = {}", course.getId());
+
         courseRepository.save(course);
+        log.debug("[Course Saved] courseId = {}", course.getId());
 
         for (Schedule schedule : course.getSchedules()) {
             schedule.setCourse(course);
             scheduleRepository.save(schedule);
         }
+        log.debug("[Schedules Saved] courseId = {}, totalSchedules = {}", course.getId(), course.getSchedules().size());
 
         for (Request request : course.getRequests()) {
             request.setCourse(course);
             requestRepository.save(request);
         }
+        log.debug("[Requests Saved] courseId = {}, totalRequests = {}", course.getId(), course.getRequests().size());
 
+        log.info("[Save Course Completed] courseId = {}", course.getId());
         return course.getId();
     }
 
     @Transactional
     public void updateCourseFile(Course course, String fileName, String s3Key) {
+        log.info("[Update Course File Start] courseId = {}, oldFileName = {}, newFileName = {}",
+                course.getId(), course.getFileName(), fileName);
+
         course.setFileName(fileName);
         course.setFileS3Key(s3Key);
         courseRepository.save(course);
+
+        log.info("[Update Course File Completed] courseId = {}, newFileName = {}, newS3Key = {}",
+                course.getId(), course.getFileName(), course.getFileS3Key());
     }
 }
