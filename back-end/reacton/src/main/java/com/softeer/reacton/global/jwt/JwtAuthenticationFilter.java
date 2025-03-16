@@ -91,7 +91,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private void filterProfessor(HttpServletRequest request) {
         String token = getProfessorJwtFromCookie(request);
         jwtTokenUtil.validateToken(token);
-        Map<String, Object> userInfo = jwtTokenUtil.getProfessorInfoFromToken(token);
+        Map<String, Object> userInfo = jwtTokenUtil.getSignupInfoFromToken(token);
 
         request.setAttribute("oauthId", userInfo.get("oauthId"));
         request.setAttribute("email", userInfo.get("email"));

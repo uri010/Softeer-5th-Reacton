@@ -36,13 +36,11 @@ public class JwtTokenUtil {
         this.studentAccessTokenExpiration = studentAccessTokenExpiration;
     }
 
-    public String createAuthAccessToken(String oauthId, String email) {
-        log.info("[JWT Created] Auth Access Token: email = {}", email);
+    public String createAuthAccessToken(long professorId) {
+        log.info("[JWT Created] Auth Access Token: professorId = {}", professorId);
 
         return Jwts.builder()
-                .claim("oauthId", oauthId)
-                .claim("email", email)
-                .claim("isSignedUp", true)
+                .claim("professorId", professorId)
                 .setExpiration(new Date(System.currentTimeMillis() + authTokenExpiration))
                 .signWith(secretKey, SignatureAlgorithm.HS256)
                 .compact();
@@ -87,7 +85,7 @@ public class JwtTokenUtil {
         log.info("[JWT Validation] Success");
     }
 
-    public Map<String, Object> getProfessorInfoFromToken(String token) {
+    public Map<String, Object> getSignupInfoFromToken(String token) {
         log.info("[Extract JWT] Professor Info");
 
         Claims claims = getClaims(token);

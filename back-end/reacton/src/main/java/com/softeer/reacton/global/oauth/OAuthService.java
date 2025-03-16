@@ -73,13 +73,13 @@ public class OAuthService {
         });
 
         boolean isSignedUp = existingUser.isPresent();
-        String accessToken = isSignedUp
-                ? jwtTokenUtil.createAuthAccessToken(userProfile.getOauthId(), userProfile.getEmail())
+        String token = isSignedUp
+                ? jwtTokenUtil.createAuthAccessToken(existingUser.get().getId())
                 : jwtTokenUtil.createSignUpToken(userProfile.getOauthId(), userProfile.getEmail());
 
         log.info("[OAuth Login Completed] provider = {}, isSignedUp = {}", providerName, isSignedUp);
 
-        return new OAuthLoginResult(accessToken, isSignedUp);
+        return new OAuthLoginResult(token, isSignedUp);
     }
 
     private OAuthTokenResponse getAuthAccessTokenByOauth(String code, OAuthProvider provider) {

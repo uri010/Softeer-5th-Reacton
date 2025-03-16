@@ -62,10 +62,10 @@ public class ProfessorService {
                 .profileImageFileName(fileName)
                 .profileImageS3Key(s3Key)
                 .build();
-        professorRepository.save(professor);
+        long professorId = professorRepository.save(professor).getId();
 
         log.info("[SignUp Completed] email = {}, name = {}, fileName = {}", email, name, fileName);
-        return jwtTokenUtil.createAuthAccessToken(oauthId, email);
+        return jwtTokenUtil.createAuthAccessToken(professorId);
     }
 
     @Transactional
