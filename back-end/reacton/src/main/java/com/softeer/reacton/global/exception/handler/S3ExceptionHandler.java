@@ -1,4 +1,4 @@
-package com.softeer.reacton.global.exception.Handler;
+package com.softeer.reacton.global.exception.handler;
 
 import com.softeer.reacton.global.dto.ExceptionResponse;
 import com.softeer.reacton.global.exception.code.S3ErrorCode;

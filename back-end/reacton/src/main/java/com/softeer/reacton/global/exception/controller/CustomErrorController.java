@@ -1,4 +1,4 @@
-package com.softeer.reacton.global.exception.Controller;
+package com.softeer.reacton.global.exception.controller;
 
 import com.softeer.reacton.global.exception.code.GlobalErrorCode;
 import com.softeer.reacton.global.dto.ExceptionResponse;
