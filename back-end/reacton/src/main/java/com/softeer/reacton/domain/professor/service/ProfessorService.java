@@ -39,15 +39,13 @@ public class ProfessorService {
     private final ProfessorFileService professorFileService;
 
     public String signUp(String name, MultipartFile file, String oauthId, String email, Boolean isSignedUp) {
-        log.debug("회원가입 처리를 시작합니다.");
+        log.info("[SignUp Start] email = {}, name = {}", email, name);
 
         if (isSignedUp) {
-            log.debug("회원가입 처리 과정에서 발생한 에러입니다. : 'isSignedUp' token value is true.");
             throw new BaseException(ProfessorErrorCode.ALREADY_REGISTERED_USER);
         }
 
         if (professorRepository.findByOauthId(oauthId).isPresent()) {
-            log.debug("회원가입 처리 과정에서 발생한 에러입니다. : User already registered.");
             throw new BaseException(ProfessorErrorCode.ALREADY_REGISTERED_USER);
         }
 
@@ -66,13 +64,14 @@ public class ProfessorService {
                 .build();
         professorRepository.save(professor);
 
-        log.debug("회원가입 처리를 완료했습니다. : email = {}, name = {}, fileName = {}", email, name, fileName);
-
+        log.info("[SignUp Completed] email = {}, name = {}, fileName = {}", email, name, fileName);
         return jwtTokenUtil.createAuthAccessToken(oauthId, email);
     }
 
     @Transactional
     public void delete(String oauthId) {
+        log.info("[Delete Professor Start] oauthId = {}", oauthId);
+
         Professor professor = professorRepository.findByOauthId(oauthId)
                 .orElseThrow(() -> new BaseException(ProfessorErrorCode.PROFESSOR_NOT_FOUND));
 
@@ -91,11 +90,11 @@ public class ProfessorService {
         professorCourseCommandService.deleteByProfessor(professor);
         professorRepository.delete(professor);
 
-        log.debug("회원 탈퇴 처리를 완료했습니다. : email = {}", professor.getEmail());
+        log.info("[Delete Professor Completed] email = {}", professor.getEmail());
     }
 
     public ProfessorInfoResponse getProfileInfo(String oauthId) {
-        log.debug("사용자의 이름, 이메일 주소를 가져옵니다.");
+        log.info("[Get Profile Info] oauthId = {}", oauthId);
 
         Professor professor = professorRepository.findByOauthId(oauthId)
                 .orElseThrow(() -> new BaseException(ProfessorErrorCode.USER_NOT_FOUND));
@@ -106,7 +105,7 @@ public class ProfessorService {
     }
 
     public Map<String, String> getProfileImage(String oauthId) {
-        log.debug("사용자의 프로필 이미지를 가져옵니다.");
+        log.info("[Get Profile Image] oauthId = {}", oauthId);
 
         Professor professor = professorRepository.findByOauthId(oauthId)
                 .orElseThrow(() -> new BaseException(ProfessorErrorCode.USER_NOT_FOUND));
@@ -116,22 +115,21 @@ public class ProfessorService {
     }
 
     public Map<String, String> updateName(String oauthId, String newName) {
-        log.debug("사용자의 이름을 수정합니다. : newName = {}", newName);
+        log.info("[Update Name Start] oauthId = {}, newName = {}", oauthId, newName);
 
         int updatedRows = professorRepository.updateName(oauthId, newName);
         if (updatedRows == 0) {
-            log.debug("사용자 정보를 가져오는 과정에서 발생한 에러입니다. : User does not exist.");
             throw new BaseException(ProfessorErrorCode.USER_NOT_FOUND);
         }
 
-        log.debug("이름 수정이 완료되었습니다.");
-
+        log.info("[Update Name Completed] oauthId = {}, newName = {}", oauthId, newName);
         return Map.of("name", newName);
     }
 
     @Transactional
     public Map<String, String> updateImage(String oauthId, MultipartFile file) {
-        log.debug("사용자의 프로필 이미지를 수정합니다.");
+        log.info("[Update Profile Image Start] oauthId = {}", oauthId);
+
         Professor professor = professorRepository.findByOauthId(oauthId)
                 .orElseThrow(() -> new BaseException(ProfessorErrorCode.PROFESSOR_NOT_FOUND));
 
@@ -148,7 +146,7 @@ public class ProfessorService {
 
         String imageUrl = professorFileService.generatePresignedUrl(professor);
 
-        log.debug("프로필 이미지 수정이 완료되었습니다.");
+        log.info("[Update Profile Image Completed] oauthId = {}, imageUrl = {}", oauthId, imageUrl);
         return Map.of("imageUrl", imageUrl);
     }
 
@@ -169,11 +167,8 @@ public class ProfessorService {
                 throw new BaseException(ProfessorErrorCode.USER_NOT_FOUND);
             }
         } catch (Exception e) {
-            log.error("프로필 이미지 업데이트 중 오류가 발생했습니다.");
-
             if (profileImageS3Key != null && !profileImageS3Key.isEmpty()) {
                 professorFileService.deleteFileByS3key(profileImageS3Key);
-                log.debug("DB 업데이트 실패로 인해 새로 업로드한 프로필 이미지({})를 S3에서 삭제했습니다.", profileImageS3Key);
             }
             throw new BaseException(S3ErrorCode.S3_INTERNAL_ERROR);
         }
