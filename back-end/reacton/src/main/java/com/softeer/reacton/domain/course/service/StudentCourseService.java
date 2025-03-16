@@ -8,7 +8,7 @@ import com.softeer.reacton.domain.schedule.entity.Schedule;
 import com.softeer.reacton.domain.schedule.repository.ScheduleRepository;
 import com.softeer.reacton.global.exception.BaseException;
 import com.softeer.reacton.global.exception.code.CourseErrorCode;
-import com.softeer.reacton.global.jwt.JwtTokenUtil;
+import com.softeer.reacton.global.jwt.util.JwtTokenUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

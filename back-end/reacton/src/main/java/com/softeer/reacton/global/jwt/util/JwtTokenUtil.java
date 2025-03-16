@@ -1,4 +1,4 @@
-package com.softeer.reacton.global.jwt;
+package com.softeer.reacton.global.jwt.util;
 
 import com.softeer.reacton.global.exception.BaseException;
 import com.softeer.reacton.global.exception.code.JwtErrorCode;
@@ -12,7 +12,6 @@ import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.util.Base64;
 import java.util.Date;
-import java.util.Map;
 
 @Slf4j
 @Component
@@ -36,13 +35,11 @@ public class JwtTokenUtil {
         this.studentAccessTokenExpiration = studentAccessTokenExpiration;
     }
 
-    public String createAuthAccessToken(String oauthId, String email) {
-        log.info("[JWT Created] Auth Access Token: email = {}", email);
+    public String createAuthAccessToken(Long professorId) {
+        log.info("[JWT Created] Auth Access Token: professorId = {}", professorId);
 
         return Jwts.builder()
-                .claim("oauthId", oauthId)
-                .claim("email", email)
-                .claim("isSignedUp", true)
+                .claim("professorId", professorId)
                 .setExpiration(new Date(System.currentTimeMillis() + authTokenExpiration))
                 .signWith(secretKey, SignatureAlgorithm.HS256)
                 .compact();
@@ -71,71 +68,15 @@ public class JwtTokenUtil {
                 .compact();
     }
 
-    public void validateToken(String token) {
-        log.info("[JWT Validation] Start");
-
-        if (token == null || token.isBlank()) {
-            throw new BaseException(JwtErrorCode.ACCESS_TOKEN_ERROR);
-        }
-
+    public Claims getClaims(String token) {
         try {
-            Jwts.parserBuilder().setSigningKey(secretKey).build().parseClaimsJws(token);
-        } catch (RuntimeException e) {
-            throw new BaseException(JwtErrorCode.ACCESS_TOKEN_ERROR);
-        }
-
-        log.info("[JWT Validation] Success");
-    }
-
-    public Map<String, Object> getProfessorInfoFromToken(String token) {
-        log.info("[Extract JWT] Professor Info");
-
-        Claims claims = getClaims(token);
-
-        String oauthId = claims.get("oauthId", String.class);
-        String email = claims.get("email", String.class);
-        Boolean isSignedUp = claims.get("isSignedUp", Boolean.class);
-
-        if (oauthId == null || email == null || isSignedUp == null) {
-            throw new BaseException(JwtErrorCode.ACCESS_TOKEN_ERROR);
-        }
-
-        log.info("[Extract JWT Success] Professor: oauthId = {}, email = {}, isSignedUp = {}", oauthId, email, isSignedUp);
-
-        return Map.of(
-                "oauthId", oauthId,
-                "email", email,
-                "isSignedUp", isSignedUp
-        );
-    }
-
-    public Map<String, Object> getStudentInfoFromToken(String token) {
-        log.info("[Extract JWT] Student Info");
-
-        Claims claims = getClaims(token);
-
-        String studentId = claims.get("studentId", String.class);
-        Long courseId = claims.get("courseId", Long.class);
-
-        if (studentId == null || courseId == null) {
-            throw new BaseException(JwtErrorCode.ACCESS_TOKEN_ERROR);
-        }
-
-        log.info("[Extract JWT Success] Student: studentId = {}, courseId = {}", studentId, courseId);
-
-        return Map.of(
-                "studentId", studentId,
-                "courseId", courseId
-        );
-    }
-
-    private Claims getClaims(String token) {
-        try {
-            return Jwts.parserBuilder()
+            Claims claims = Jwts.parserBuilder()
                     .setSigningKey(secretKey)
                     .build()
                     .parseClaimsJws(token)
                     .getBody();
+            log.info("[JWT Parsing Success] Claims = {}", claims);
+            return claims;
         } catch (JwtException e) {
             throw new BaseException(JwtErrorCode.ACCESS_TOKEN_ERROR);
         }

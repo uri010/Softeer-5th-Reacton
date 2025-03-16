@@ -5,15 +5,15 @@ import com.softeer.reacton.domain.professor.dto.ProfessorInfoResponse;
 import com.softeer.reacton.domain.professor.dto.UpdateNameRequest;
 import com.softeer.reacton.global.config.CookieConfig;
 import com.softeer.reacton.global.dto.SuccessResponse;
+import com.softeer.reacton.global.jwt.dto.ProfessorAuthInfo;
+import com.softeer.reacton.global.jwt.dto.ProfessorSignupInfo;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Pattern;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
@@ -35,9 +35,6 @@ public class ProfessorController {
     private final ProfessorService professorService;
     private final CookieConfig cookieConfig;
 
-    @Value("${frontend.base-url}")
-    private String FRONTEND_BASE_URL;
-
     @GetMapping
     @Operation(
             summary = "교수 프로필 정보 조회",
@@ -48,9 +45,8 @@ public class ProfessorController {
                     @ApiResponse(responseCode = "500", description = "서버와의 연결에 실패했습니다.")
             }
     )
-    public ResponseEntity<SuccessResponse<ProfessorInfoResponse>> getProfileInfo(HttpServletRequest request) {
-        String oauthId = (String) request.getAttribute("oauthId");
-        ProfessorInfoResponse response = professorService.getProfileInfo(oauthId);
+    public ResponseEntity<SuccessResponse<ProfessorInfoResponse>> getProfileInfo(ProfessorAuthInfo professorAuthInfo) {
+        ProfessorInfoResponse response = professorService.getProfileInfo(professorAuthInfo.id());
 
         return ResponseEntity
                 .status(HttpStatus.OK)
@@ -67,9 +63,8 @@ public class ProfessorController {
                     @ApiResponse(responseCode = "500", description = "서버와의 연결에 실패했습니다.")
             }
     )
-    public ResponseEntity<SuccessResponse<Map<String, String>>> getProfileImage(HttpServletRequest request) {
-        String oauthId = (String) request.getAttribute("oauthId");
-        Map<String, String> response = professorService.getProfileImage(oauthId);
+    public ResponseEntity<SuccessResponse<Map<String, String>>> getProfileImage(ProfessorAuthInfo professorAuthInfo) {
+        Map<String, String> response = professorService.getProfileImage(professorAuthInfo.id());
 
         return ResponseEntity
                 .status(HttpStatus.OK)
@@ -87,11 +82,9 @@ public class ProfessorController {
             }
     )
     public ResponseEntity<SuccessResponse<Map<String, String>>> updateName(
-            @Valid @RequestBody UpdateNameRequest requestDto,
-            HttpServletRequest request) {
-        String oauthId = (String) request.getAttribute("oauthId");
-        String newName = requestDto.getName();
-        Map<String, String> response = professorService.updateName(oauthId, newName);
+            ProfessorAuthInfo professorAuthInfo,
+            @Valid @RequestBody UpdateNameRequest requestDto) {
+        Map<String, String> response = professorService.updateName(professorAuthInfo.id(), requestDto.getName());
 
         return ResponseEntity
                 .status(HttpStatus.OK)
@@ -110,10 +103,9 @@ public class ProfessorController {
             }
     )
     public ResponseEntity<SuccessResponse<Map<String, String>>> updateImage(
-            @RequestPart(value = "profileImage", required = false) MultipartFile profileImageFile,
-            HttpServletRequest request) {
-        String oauthId = (String) request.getAttribute("oauthId");
-        Map<String, String> imageUrl = professorService.updateImage(oauthId, profileImageFile);
+            ProfessorAuthInfo professorAuthInfo,
+            @RequestPart(value = "profileImage", required = false) MultipartFile profileImageFile) {
+        Map<String, String> imageUrl = professorService.updateImage(professorAuthInfo.id(), profileImageFile);
 
         return ResponseEntity
                 .status(HttpStatus.OK)
@@ -131,27 +123,31 @@ public class ProfessorController {
             }
     )
     public ResponseEntity<Void> signUp(
+            ProfessorSignupInfo signTokenInfo,
             @RequestPart("name") @Pattern(regexp = "^[가-힣a-zA-Z]{1,20}$", message = "이름은 한글 또는 영문만 1~20자 입력 가능합니다.") String name,
-            @RequestPart(value = "profileImage", required = false) MultipartFile profileImageFile,
-            HttpServletRequest request) {
-        String oauthId = (String) request.getAttribute("oauthId");
-        String email = (String) request.getAttribute("email");
-        boolean isSignedUp = (boolean) request.getAttribute("isSignedUp");
+            @RequestPart(value = "profileImage", required = false) MultipartFile profileImageFile) {
+        String newAccessToken = professorService.signUp(name, profileImageFile, signTokenInfo.oauthId(), signTokenInfo.email(), signTokenInfo.isSignedUp());
 
-        String newAccessToken = professorService.signUp(name, profileImageFile, oauthId, email, isSignedUp);
+        ResponseCookie expiredSignupCookie = ResponseCookie.from("signup_token", "")
+                .httpOnly(true)
+                .secure(false)
+                .path("/")
+                .maxAge(0)
+                .sameSite("Strict")
+                .build();
+
         ResponseCookie jwtCookie = ResponseCookie.from("access_token", newAccessToken)
                 .httpOnly(true)
-                .secure(true)
+                .secure(false)
                 .path("/")
                 .maxAge(cookieConfig.getAuthExpiration())
                 .sameSite("Strict")
-                .domain(cookieConfig.getDomain())
                 .build();
 
         return ResponseEntity
-                .status(HttpStatus.SEE_OTHER)
-                .header(HttpHeaders.LOCATION, FRONTEND_BASE_URL + "professor")
+                .status(HttpStatus.CREATED)
                 .header(HttpHeaders.SET_COOKIE, jwtCookie.toString())
+                .header(HttpHeaders.SET_COOKIE, expiredSignupCookie.toString())
                 .build();
     }
 
@@ -166,16 +162,14 @@ public class ProfessorController {
     public ResponseEntity<Void> logout() {
         ResponseCookie jwtCookie = ResponseCookie.from("access_token", "")
                 .httpOnly(true)
-                .secure(true)
+                .secure(false)
                 .path("/")
                 .maxAge(0)
                 .sameSite("Strict")
-                .domain(cookieConfig.getDomain())
                 .build();
 
         return ResponseEntity
-                .status(HttpStatus.SEE_OTHER)
-                .header(HttpHeaders.LOCATION, FRONTEND_BASE_URL)
+                .status(HttpStatus.OK)
                 .header(HttpHeaders.SET_COOKIE, jwtCookie.toString())
                 .build();
     }
@@ -188,22 +182,19 @@ public class ProfessorController {
                     @ApiResponse(responseCode = "204", description = "성공적으로 탈퇴되었습니다."),
             }
     )
-    public ResponseEntity<Void> delete(HttpServletRequest request) {
-        String oauthId = (String) request.getAttribute("oauthId");
-        professorService.delete(oauthId);
+    public ResponseEntity<Void> delete(ProfessorAuthInfo professorAuthInfo) {
+        professorService.delete(professorAuthInfo.id());
 
         ResponseCookie jwtCookie = ResponseCookie.from("access_token", "")
                 .httpOnly(true)
-                .secure(true)
+                .secure(false)
                 .path("/")
                 .maxAge(0)
                 .sameSite("Strict")
-                .domain(cookieConfig.getDomain())
                 .build();
 
         return ResponseEntity
-                .status(HttpStatus.SEE_OTHER)
-                .header(HttpHeaders.LOCATION, FRONTEND_BASE_URL)
+                .status(HttpStatus.OK)
                 .header(HttpHeaders.SET_COOKIE, jwtCookie.toString())
                 .build();
     }

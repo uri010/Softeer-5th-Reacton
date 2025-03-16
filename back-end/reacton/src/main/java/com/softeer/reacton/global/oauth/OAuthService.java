@@ -5,7 +5,7 @@ import com.softeer.reacton.domain.professor.repository.ProfessorRepository;
 import com.softeer.reacton.global.exception.BaseException;
 import com.softeer.reacton.global.exception.code.GlobalErrorCode;
 import com.softeer.reacton.global.exception.code.OAuthErrorCode;
-import com.softeer.reacton.global.jwt.JwtTokenUtil;
+import com.softeer.reacton.global.jwt.util.JwtTokenUtil;
 import com.softeer.reacton.global.oauth.dto.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -73,13 +73,13 @@ public class OAuthService {
         });
 
         boolean isSignedUp = existingUser.isPresent();
-        String accessToken = isSignedUp
-                ? jwtTokenUtil.createAuthAccessToken(userProfile.getOauthId(), userProfile.getEmail())
+        String token = isSignedUp
+                ? jwtTokenUtil.createAuthAccessToken(existingUser.get().getId())
                 : jwtTokenUtil.createSignUpToken(userProfile.getOauthId(), userProfile.getEmail());
 
         log.info("[OAuth Login Completed] provider = {}, isSignedUp = {}", providerName, isSignedUp);
 
-        return new OAuthLoginResult(accessToken, isSignedUp);
+        return new OAuthLoginResult(token, isSignedUp);
     }
 
     private OAuthTokenResponse getAuthAccessTokenByOauth(String code, OAuthProvider provider) {
