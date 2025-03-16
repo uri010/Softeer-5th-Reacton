@@ -32,7 +32,7 @@ public class OAuthService {
     private final WebClient webClient;
 
     public String getOauthLoginUrl(String providerName) {
-        log.debug("OAuth 로그인 URL을 생성합니다.");
+        log.info("[Generate OAuth Login URL] provider = {}", providerName);
 
         OAuthProvider provider = oauthConfig.getProvider(providerName);
         StringBuilder urlBuilder = new StringBuilder(provider.getLoginUrl());
@@ -47,10 +47,9 @@ public class OAuthService {
     }
 
     public OAuthLoginResult processOauthLogin(String providerName, String code) {
-        log.debug("OAuth 로그인을 진행합니다.");
+        log.info("[OAuth Login Start] provider = {}, code = {}", providerName, code);
 
         if (code == null || code.isEmpty()) {
-            log.debug("OAuth 로그인을 진행하는 과정에서 발생한 에러입니다. : Parameter 'code' is empty.");
             throw new BaseException(GlobalErrorCode.MISSING_PARAMETER);
         }
 
@@ -63,12 +62,13 @@ public class OAuthService {
 
         existingUser.ifPresent(professor -> {
             if (!professor.getEmail().equals(userProfile.getEmail())) {
-                log.debug("사용자 이메일 주소를 변경합니다. : oldEmail = {}, newEmail = {}", professor.getEmail(), userProfile.getEmail());
+                log.info("[Update User Email] oauthId = {}, oldEmail = {}, newEmail = {}",
+                        professor.getOauthId(), professor.getEmail(), userProfile.getEmail());
 
                 professor.updateEmail(userProfile.getEmail());
                 professorRepository.save(professor);
 
-                log.debug("사용자 이메일 주소를 변경했습니다.");
+                log.info("[User Email Updated] oauthId = {}", professor.getOauthId());
             }
         });
 
@@ -77,13 +77,13 @@ public class OAuthService {
                 ? jwtTokenUtil.createAuthAccessToken(userProfile.getOauthId(), userProfile.getEmail())
                 : jwtTokenUtil.createSignUpToken(userProfile.getOauthId(), userProfile.getEmail());
 
-        log.info("OAuth 로그인이 완료되었습니다.");
+        log.info("[OAuth Login Completed] provider = {}, isSignedUp = {}", providerName, isSignedUp);
 
         return new OAuthLoginResult(accessToken, isSignedUp);
     }
 
     private OAuthTokenResponse getAuthAccessTokenByOauth(String code, OAuthProvider provider) {
-        log.debug("OAuth access 토큰을 요청합니다.");
+        log.info("[Request OAuth Access Token] provider = {}, code = {}", provider.getClass(), code);
 
         MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
         formData.add("code", code);
@@ -93,32 +93,36 @@ public class OAuthService {
         formData.add("grant_type", "authorization_code");
 
         try {
-            return webClient.post()
+            OAuthTokenResponse tokenResponse = webClient.post()
                     .uri(provider.getTokenUri())
                     .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED_VALUE)
                     .bodyValue(formData)
                     .retrieve()
                     .bodyToMono(OAuthTokenResponse.class)
                     .block();
+
+            log.info("[OAuth Access Token Received] provider = {}", provider.getClass());
+            return tokenResponse;
         } catch (WebClientResponseException e) {
-            log.error("OAuth access 토큰을 요청하는 과정에서 발생한 에러입니다. : {}", e.getMessage());
             throw new BaseException(GlobalErrorCode.SERVER_ERROR);
         }
     }
 
     private UserProfile getUserProfile(String providerName, OAuthProvider provider, OAuthTokenResponse tokenResponse) {
-        log.debug("OAuth 사용자 정보를 가져옵니다.");
+        log.info("[Request OAuth User Profile] provider = {}", providerName);
 
         if ("google".equals(providerName)) {
-            return webClient.get()
+            UserProfile userProfile = webClient.get()
                     .uri(provider.getUserInfoUri())
                     .headers(header -> header.setBearerAuth(tokenResponse.getAccessToken()))
                     .retrieve()
                     .bodyToMono(GoogleUserProfile.class)
                     .block();
+
+            log.info("[OAuth User Profile Retrieved] provider = {}, oauthId = {}", providerName, userProfile.getOauthId());
+            return userProfile;
         }
 
-        log.warn("OAuth 사용자 정보를 가져오는 과정에서 발생한 에러입니다. : OAuth provider '{}' not found", providerName);
         throw new BaseException(OAuthErrorCode.UNSUPPORTED_OAUTH_PROVIDER);
     }
 }
