@@ -21,6 +21,8 @@ public class StudentAuthResolver implements HandlerMethodArgumentResolver {
 
     private final JwtTokenUtil jwtTokenUtil;
 
+    private static final String STUDENT_TOKEN_COOKIE_NAME = "student_access_token";
+
     @Override
     public boolean supportsParameter(MethodParameter parameter) {
         return parameter.getParameterType().equals(StudentAuthInfo.class);
@@ -50,7 +52,7 @@ public class StudentAuthResolver implements HandlerMethodArgumentResolver {
     private String extractTokenFromRequest(HttpServletRequest request) {
         if (request.getCookies() != null) {
             for (Cookie cookie : request.getCookies()) {
-                if ("student_access_token".equals(cookie.getName())) {
+                if (STUDENT_TOKEN_COOKIE_NAME.equals(cookie.getName())) {
                     return cookie.getValue();
                 }
             }

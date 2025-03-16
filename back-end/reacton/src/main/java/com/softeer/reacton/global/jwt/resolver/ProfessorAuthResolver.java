@@ -23,6 +23,8 @@ public class ProfessorAuthResolver implements HandlerMethodArgumentResolver {
 
     private final JwtTokenUtil jwtTokenUtil;
 
+    private static final String PROFESSOR_TOKEN_COOKIE_NAME = "access_token";
+
     @Override
     public boolean supportsParameter(MethodParameter parameter) {
         return parameter.getParameterType().equals(ProfessorAuthInfo.class);
@@ -51,7 +53,7 @@ public class ProfessorAuthResolver implements HandlerMethodArgumentResolver {
     private String extractTokenFromRequest(HttpServletRequest request) {
         if (request.getCookies() != null) {
             for (Cookie cookie : request.getCookies()) {
-                if ("access_token".equals(cookie.getName())) {
+                if (PROFESSOR_TOKEN_COOKIE_NAME.equals(cookie.getName())) {
                     return cookie.getValue();
                 }
             }
