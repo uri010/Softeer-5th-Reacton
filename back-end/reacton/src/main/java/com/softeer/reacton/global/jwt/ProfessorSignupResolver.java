@@ -2,7 +2,7 @@ package com.softeer.reacton.global.jwt;
 
 import com.softeer.reacton.global.exception.BaseException;
 import com.softeer.reacton.global.exception.code.JwtErrorCode;
-import com.softeer.reacton.global.jwt.dto.SignupTokenInfo;
+import com.softeer.reacton.global.jwt.dto.ProfessorSignupInfo;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -16,13 +16,13 @@ import org.springframework.web.method.support.ModelAndViewContainer;
 
 @Component
 @RequiredArgsConstructor
-public class SignupTokenArgumentResolver implements HandlerMethodArgumentResolver {
+public class ProfessorSignupResolver implements HandlerMethodArgumentResolver {
 
     private final JwtTokenUtil jwtTokenUtil;
 
     @Override
     public boolean supportsParameter(MethodParameter parameter) {
-        return parameter.getParameterType().equals(SignupTokenInfo.class);
+        return parameter.getParameterType().equals(ProfessorSignupInfo.class);
     }
 
     @Override
@@ -44,7 +44,7 @@ public class SignupTokenArgumentResolver implements HandlerMethodArgumentResolve
             throw new BaseException(JwtErrorCode.ACCESS_TOKEN_ERROR);
         }
 
-        return new SignupTokenInfo(oauthId, email, isSignedUp);
+        return new ProfessorSignupInfo(oauthId, email, isSignedUp);
     }
 
     private String extractTokenFromRequest(HttpServletRequest request) {

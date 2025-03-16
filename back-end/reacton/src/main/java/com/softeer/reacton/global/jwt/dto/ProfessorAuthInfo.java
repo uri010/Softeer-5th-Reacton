@@ -1,4 +1,4 @@
 package com.softeer.reacton.global.jwt.dto;
 
-public record LoginProfessor(Long id) {
+public record ProfessorAuthInfo(Long id) {
 }

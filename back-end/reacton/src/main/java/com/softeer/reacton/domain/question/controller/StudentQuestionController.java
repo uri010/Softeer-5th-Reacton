@@ -5,7 +5,7 @@ import com.softeer.reacton.domain.question.service.StudentQuestionService;
 import com.softeer.reacton.domain.question.dto.QuestionAllResponse;
 import com.softeer.reacton.domain.question.dto.QuestionSendRequest;
 import com.softeer.reacton.global.dto.SuccessResponse;
-import com.softeer.reacton.global.jwt.dto.StudentTokenInfo;
+import com.softeer.reacton.global.jwt.dto.StudentAuthInfo;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -36,8 +36,8 @@ public class StudentQuestionController {
                     @ApiResponse(responseCode = "500", description = "서버와의 연결에 실패했습니다.")
             }
     )
-    public ResponseEntity<SuccessResponse<QuestionAllResponse>> getQuestions(StudentTokenInfo studentTokenInfo) {
-        QuestionAllResponse response = studentQuestionService.getQuestionsByStudentId(studentTokenInfo.studentId(), studentTokenInfo.courseId());
+    public ResponseEntity<SuccessResponse<QuestionAllResponse>> getQuestions(StudentAuthInfo studentAuthInfo) {
+        QuestionAllResponse response = studentQuestionService.getQuestionsByStudentId(studentAuthInfo.studentId(), studentAuthInfo.courseId());
 
         return ResponseEntity
                 .status(HttpStatus.OK)
@@ -56,9 +56,9 @@ public class StudentQuestionController {
             }
     )
     public ResponseEntity<SuccessResponse<CourseQuestionResponse>> sendQuestion(
-            StudentTokenInfo studentTokenInfo,
+            StudentAuthInfo studentAuthInfo,
             @Valid @RequestBody QuestionSendRequest questionSendRequest) {
-        CourseQuestionResponse response = studentQuestionService.sendQuestion(studentTokenInfo.studentId(), studentTokenInfo.courseId(), questionSendRequest);
+        CourseQuestionResponse response = studentQuestionService.sendQuestion(studentAuthInfo.studentId(), studentAuthInfo.courseId(), questionSendRequest);
 
         return ResponseEntity
                 .status(HttpStatus.OK)
@@ -78,9 +78,9 @@ public class StudentQuestionController {
             }
     )
     public ResponseEntity<Void> checkQuestion(
-            StudentTokenInfo studentTokenInfo,
+            StudentAuthInfo studentAuthInfo,
             @PathVariable("questionId") Long questionId) {
-        studentQuestionService.sendQuestionCheck(studentTokenInfo.courseId(), questionId);
+        studentQuestionService.sendQuestionCheck(studentAuthInfo.courseId(), questionId);
 
         return ResponseEntity
                 .status(HttpStatus.NO_CONTENT)

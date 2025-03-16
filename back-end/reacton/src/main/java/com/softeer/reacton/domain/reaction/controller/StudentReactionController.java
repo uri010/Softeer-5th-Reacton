@@ -2,7 +2,7 @@ package com.softeer.reacton.domain.reaction.controller;
 
 import com.softeer.reacton.domain.reaction.service.StudentReactionService;
 import com.softeer.reacton.domain.reaction.dto.ReactionSendRequest;
-import com.softeer.reacton.global.jwt.dto.StudentTokenInfo;
+import com.softeer.reacton.global.jwt.dto.StudentAuthInfo;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -37,9 +37,9 @@ public class StudentReactionController {
             }
     )
     public ResponseEntity<Void> sendReaction(
-            StudentTokenInfo studentTokenInfo,
+            StudentAuthInfo studentAuthInfo,
             @Valid @RequestBody ReactionSendRequest reactionSendRequest) {
-        studentReactionService.sendReaction(studentTokenInfo.courseId(), reactionSendRequest);
+        studentReactionService.sendReaction(studentAuthInfo.courseId(), reactionSendRequest);
 
         return ResponseEntity
                 .status(HttpStatus.NO_CONTENT)

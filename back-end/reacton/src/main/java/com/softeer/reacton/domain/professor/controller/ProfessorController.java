@@ -5,8 +5,8 @@ import com.softeer.reacton.domain.professor.dto.ProfessorInfoResponse;
 import com.softeer.reacton.domain.professor.dto.UpdateNameRequest;
 import com.softeer.reacton.global.config.CookieConfig;
 import com.softeer.reacton.global.dto.SuccessResponse;
-import com.softeer.reacton.global.jwt.dto.LoginProfessor;
-import com.softeer.reacton.global.jwt.dto.SignupTokenInfo;
+import com.softeer.reacton.global.jwt.dto.ProfessorAuthInfo;
+import com.softeer.reacton.global.jwt.dto.ProfessorSignupInfo;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -45,8 +45,8 @@ public class ProfessorController {
                     @ApiResponse(responseCode = "500", description = "서버와의 연결에 실패했습니다.")
             }
     )
-    public ResponseEntity<SuccessResponse<ProfessorInfoResponse>> getProfileInfo(LoginProfessor loginProfessor) {
-        ProfessorInfoResponse response = professorService.getProfileInfo(loginProfessor.id());
+    public ResponseEntity<SuccessResponse<ProfessorInfoResponse>> getProfileInfo(ProfessorAuthInfo professorAuthInfo) {
+        ProfessorInfoResponse response = professorService.getProfileInfo(professorAuthInfo.id());
 
         return ResponseEntity
                 .status(HttpStatus.OK)
@@ -63,8 +63,8 @@ public class ProfessorController {
                     @ApiResponse(responseCode = "500", description = "서버와의 연결에 실패했습니다.")
             }
     )
-    public ResponseEntity<SuccessResponse<Map<String, String>>> getProfileImage(LoginProfessor loginProfessor) {
-        Map<String, String> response = professorService.getProfileImage(loginProfessor.id());
+    public ResponseEntity<SuccessResponse<Map<String, String>>> getProfileImage(ProfessorAuthInfo professorAuthInfo) {
+        Map<String, String> response = professorService.getProfileImage(professorAuthInfo.id());
 
         return ResponseEntity
                 .status(HttpStatus.OK)
@@ -82,9 +82,9 @@ public class ProfessorController {
             }
     )
     public ResponseEntity<SuccessResponse<Map<String, String>>> updateName(
-            LoginProfessor loginProfessor,
+            ProfessorAuthInfo professorAuthInfo,
             @Valid @RequestBody UpdateNameRequest requestDto) {
-        Map<String, String> response = professorService.updateName(loginProfessor.id(), requestDto.getName());
+        Map<String, String> response = professorService.updateName(professorAuthInfo.id(), requestDto.getName());
 
         return ResponseEntity
                 .status(HttpStatus.OK)
@@ -103,9 +103,9 @@ public class ProfessorController {
             }
     )
     public ResponseEntity<SuccessResponse<Map<String, String>>> updateImage(
-            LoginProfessor loginProfessor,
+            ProfessorAuthInfo professorAuthInfo,
             @RequestPart(value = "profileImage", required = false) MultipartFile profileImageFile) {
-        Map<String, String> imageUrl = professorService.updateImage(loginProfessor.id(), profileImageFile);
+        Map<String, String> imageUrl = professorService.updateImage(professorAuthInfo.id(), profileImageFile);
 
         return ResponseEntity
                 .status(HttpStatus.OK)
@@ -123,7 +123,7 @@ public class ProfessorController {
             }
     )
     public ResponseEntity<Void> signUp(
-            SignupTokenInfo signTokenInfo,
+            ProfessorSignupInfo signTokenInfo,
             @RequestPart("name") @Pattern(regexp = "^[가-힣a-zA-Z]{1,20}$", message = "이름은 한글 또는 영문만 1~20자 입력 가능합니다.") String name,
             @RequestPart(value = "profileImage", required = false) MultipartFile profileImageFile) {
         String newAccessToken = professorService.signUp(name, profileImageFile, signTokenInfo.oauthId(), signTokenInfo.email(), signTokenInfo.isSignedUp());
@@ -182,8 +182,8 @@ public class ProfessorController {
                     @ApiResponse(responseCode = "204", description = "성공적으로 탈퇴되었습니다."),
             }
     )
-    public ResponseEntity<Void> delete(LoginProfessor loginProfessor) {
-        professorService.delete(loginProfessor.id());
+    public ResponseEntity<Void> delete(ProfessorAuthInfo professorAuthInfo) {
+        professorService.delete(professorAuthInfo.id());
 
         ResponseCookie jwtCookie = ResponseCookie.from("access_token", "")
                 .httpOnly(true)

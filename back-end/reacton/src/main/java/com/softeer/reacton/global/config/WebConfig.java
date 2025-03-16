@@ -1,8 +1,8 @@
 package com.softeer.reacton.global.config;
 
-import com.softeer.reacton.global.jwt.AccessTokenArgumentResolver;
-import com.softeer.reacton.global.jwt.SignupTokenArgumentResolver;
-import com.softeer.reacton.global.jwt.StudentTokenArgumentResolver;
+import com.softeer.reacton.global.jwt.ProfessorAuthResolver;
+import com.softeer.reacton.global.jwt.ProfessorSignupResolver;
+import com.softeer.reacton.global.jwt.StudentAuthResolver;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Configuration;
@@ -17,15 +17,15 @@ import java.util.List;
 @RequiredArgsConstructor
 public class WebConfig implements WebMvcConfigurer {
 
-    private final SignupTokenArgumentResolver signupTokenArgumentResolver;
-    private final AccessTokenArgumentResolver accessTokenArgumentResolver;
-    private final StudentTokenArgumentResolver studentTokenArgumentResolver;
+    private final ProfessorSignupResolver professorSignupResolver;
+    private final ProfessorAuthResolver professorAuthResolver;
+    private final StudentAuthResolver studentAuthResolver;
 
     @Override
     public void addArgumentResolvers(List<HandlerMethodArgumentResolver> resolvers) {
-        resolvers.add(signupTokenArgumentResolver);
-        resolvers.add(accessTokenArgumentResolver);
-        resolvers.add(studentTokenArgumentResolver);
+        resolvers.add(professorSignupResolver);
+        resolvers.add(professorAuthResolver);
+        resolvers.add(studentAuthResolver);
     }
 
     @Override
