@@ -6,10 +6,10 @@ import com.softeer.reacton.domain.course.dto.*;
 import com.softeer.reacton.domain.professor.entity.Professor;
 import com.softeer.reacton.domain.professor.service.ProfessorService;
 import com.softeer.reacton.global.dto.SuccessResponse;
+import com.softeer.reacton.global.jwt.dto.LoginProfessor;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -47,10 +47,8 @@ public class ProfessorCourseController {
                     @ApiResponse(responseCode = "303", description = "활성화된 수업이 없습니다. 홈 화면으로 이동합니다.")
             }
     )
-    public ResponseEntity<?> getActiveCourses(HttpServletRequest request) {
-        String oauthId = (String) request.getAttribute("oauthId");
-        Long professorId = professorService.getProfessorIdByOauthId(oauthId);
-        ActiveCourseResponse activeCourse = professorCourseQueryService.getActiveCourseByUser(professorId);
+    public ResponseEntity<?> getActiveCourses(LoginProfessor loginProfessor) {
+        ActiveCourseResponse activeCourse = professorCourseQueryService.getActiveCourseByUser(loginProfessor.id());
 
         if (activeCourse != null) {
             return ResponseEntity.status(HttpStatus.OK)
@@ -68,9 +66,8 @@ public class ProfessorCourseController {
             description = "수업 데이터를 받아 데이터베이스 저장하고 courseId를 반환합니다.",
             responses = {@ApiResponse(responseCode = "201", description = "수업이 생성되었습니다.")}
     )
-    public ResponseEntity<SuccessResponse<Map<String, String>>> createCourse(HttpServletRequest request, @RequestBody @Valid @NonNull CourseRequest courseRequest) {
-        String oauthId = (String) request.getAttribute("oauthId");
-        Professor professor = professorService.getProfessorByOauthId(oauthId);
+    public ResponseEntity<SuccessResponse<Map<String, String>>> createCourse(LoginProfessor loginProfessor, @RequestBody @Valid @NonNull CourseRequest courseRequest) {
+        Professor professor = professorService.getProfessorById(loginProfessor.id());
 
         long courseId = professorCourseCommandService.createCourse(professor, courseRequest);
 
@@ -93,12 +90,10 @@ public class ProfessorCourseController {
             }
     )
     public ResponseEntity<SuccessResponse<CourseDetailResponse>> getCourseDetail(
-            HttpServletRequest request,
+            LoginProfessor loginProfessor,
             @PathVariable("courseId") Long courseId
     ) {
-        String oauthId = (String) request.getAttribute("oauthId");
-        Long professorId = professorService.getProfessorIdByOauthId(oauthId);
-        CourseDetailResponse response = professorCourseQueryService.getCourseDetail(courseId, professorId);
+        CourseDetailResponse response = professorCourseQueryService.getCourseDetail(courseId, loginProfessor.id());
 
         return ResponseEntity
                 .status(HttpStatus.OK)
@@ -114,10 +109,8 @@ public class ProfessorCourseController {
                     @ApiResponse(responseCode = "404", description = "정보를 찾을 수 없습니다.")
             }
     )
-    public ResponseEntity<SuccessResponse<CourseAllResponse>> getAllCourses(HttpServletRequest request) {
-        String oauthId = (String) request.getAttribute("oauthId");
-        Long professorId = professorService.getProfessorIdByOauthId(oauthId);
-        CourseAllResponse response = professorCourseQueryService.getAllCourses(professorId);
+    public ResponseEntity<SuccessResponse<CourseAllResponse>> getAllCourses(LoginProfessor loginProfessor) {
+        CourseAllResponse response = professorCourseQueryService.getAllCourses(loginProfessor.id());
 
         return ResponseEntity
                 .status(HttpStatus.OK)
@@ -134,12 +127,9 @@ public class ProfessorCourseController {
             }
     )
     public ResponseEntity<SuccessResponse<List<CourseSummaryResponse>>> searchCourses(
-            @RequestParam("keyword") String keyword,
-            HttpServletRequest request) {
-        String oauthId = (String) request.getAttribute("oauthId");
-        Long professorId = professorService.getProfessorIdByOauthId(oauthId);
-
-        List<CourseSummaryResponse> response = professorCourseQueryService.searchCourses(professorId, keyword);
+            LoginProfessor loginProfessor,
+            @RequestParam("keyword") String keyword) {
+        List<CourseSummaryResponse> response = professorCourseQueryService.searchCourses(loginProfessor.id(), keyword);
 
         return ResponseEntity
                 .status(HttpStatus.OK)
@@ -153,13 +143,10 @@ public class ProfessorCourseController {
             responses = {@ApiResponse(responseCode = "200", description = "수업이 수정되었습니다.")}
     )
     public ResponseEntity<SuccessResponse<Map<String, String>>> updateCourse(
-            HttpServletRequest request,
+            LoginProfessor loginProfessor,
             @PathVariable(value = "courseId") long courseId,
             @RequestBody @Valid CourseRequest courseRequest) {
-        String oauthId = (String) request.getAttribute("oauthId");
-        Long professorId = professorService.getProfessorIdByOauthId(oauthId);
-
-        professorCourseCommandService.updateCourse(professorId, courseId, courseRequest);
+        professorCourseCommandService.updateCourse(loginProfessor.id(), courseId, courseRequest);
 
         Map<String, String> response = new HashMap<>();
         response.put("courseId", String.valueOf(courseId));
@@ -175,11 +162,8 @@ public class ProfessorCourseController {
             description = "courseId에 해당하는 수업을 삭제합니다.",
             responses = {@ApiResponse(responseCode = "204", description = "수업이 삭제되었습니다.")}
     )
-    public ResponseEntity<Void> deleteCourse(HttpServletRequest request, @PathVariable(value = "courseId") long courseId) {
-        String oauthId = (String) request.getAttribute("oauthId");
-        Long professorId = professorService.getProfessorIdByOauthId(oauthId);
-
-        professorCourseCommandService.deleteCourse(professorId, courseId);
+    public ResponseEntity<Void> deleteCourse(LoginProfessor loginProfessor, @PathVariable(value = "courseId") long courseId) {
+        professorCourseCommandService.deleteCourse(loginProfessor.id(), courseId);
 
         return ResponseEntity.noContent().build();
     }
@@ -190,11 +174,8 @@ public class ProfessorCourseController {
             description = "courseId에 해당하는 수업을 시작 상태로 변경합니다.",
             responses = {@ApiResponse(responseCode = "204", description = "수업이 시작 상태로 변경되었습니다.")}
     )
-    public ResponseEntity<Void> startCourse(HttpServletRequest request, @PathVariable(value = "courseId") long courseId) {
-        String oauthId = (String) request.getAttribute("oauthId");
-        Long professorId = professorService.getProfessorIdByOauthId(oauthId);
-
-        professorCourseCommandService.startCourse(professorId, courseId);
+    public ResponseEntity<Void> startCourse(LoginProfessor loginProfessor, @PathVariable(value = "courseId") long courseId) {
+        professorCourseCommandService.startCourse(loginProfessor.id(), courseId);
 
         return ResponseEntity.noContent().build();
     }
@@ -205,11 +186,8 @@ public class ProfessorCourseController {
             description = "courseId에 해당하는 수업을 종료 상태로 변경합니다.",
             responses = {@ApiResponse(responseCode = "204", description = "수업이 종료 상태로 변경되었습니다.")}
     )
-    public ResponseEntity<Void> closeCourse(HttpServletRequest request, @PathVariable(value = "courseId") long courseId) {
-        String oauthId = (String) request.getAttribute("oauthId");
-        Long professorId = professorService.getProfessorIdByOauthId(oauthId);
-
-        professorCourseCommandService.closeCourse(professorId, courseId);
+    public ResponseEntity<Void> closeCourse(LoginProfessor loginProfessor, @PathVariable(value = "courseId") long courseId) {
+        professorCourseCommandService.closeCourse(loginProfessor.id(), courseId);
 
         return ResponseEntity.noContent().build();
     }
@@ -221,13 +199,10 @@ public class ProfessorCourseController {
             responses = {@ApiResponse(responseCode = "200", description = "수업 강의자료 파일이 업로드되었습니다.")}
     )
     public ResponseEntity<SuccessResponse<Map<String, String>>> uploadFile(
-            HttpServletRequest request,
+            LoginProfessor loginProfessor,
             @PathVariable(value = "courseId") long courseId,
             @RequestPart(value = "file", required = false) MultipartFile file) {
-        String oauthId = (String) request.getAttribute("oauthId");
-        Long professorId = professorService.getProfessorIdByOauthId(oauthId);
-
-        Map<String, String> response = professorCourseCommandService.uploadFile(professorId, courseId, file);
+        Map<String, String> response = professorCourseCommandService.uploadFile(loginProfessor.id(), courseId, file);
 
         return ResponseEntity
                 .status(HttpStatus.OK)
@@ -242,12 +217,9 @@ public class ProfessorCourseController {
                     {@ApiResponse(responseCode = "200", description = "수업 강의자료 파일 url이 발급되었습니다.")}
     )
     public ResponseEntity<SuccessResponse<Map<String, String>>> getFile(
-            HttpServletRequest request,
+            LoginProfessor loginProfessor,
             @PathVariable(value = "courseId") long courseId) {
-        String oauthId = (String) request.getAttribute("oauthId");
-        Long professorId = professorService.getProfessorIdByOauthId(oauthId);
-
-        Map<String, String> response = professorCourseCommandService.getCourseFileUrl(professorId, courseId);
+        Map<String, String> response = professorCourseCommandService.getCourseFileUrl(loginProfessor.id(), courseId);
 
         return ResponseEntity
                 .status(HttpStatus.OK)

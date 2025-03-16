@@ -5,10 +5,11 @@ import com.softeer.reacton.domain.professor.dto.ProfessorInfoResponse;
 import com.softeer.reacton.domain.professor.dto.UpdateNameRequest;
 import com.softeer.reacton.global.config.CookieConfig;
 import com.softeer.reacton.global.dto.SuccessResponse;
+import com.softeer.reacton.global.jwt.dto.LoginProfessor;
+import com.softeer.reacton.global.jwt.dto.SignupTokenInfo;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Pattern;
 import lombok.RequiredArgsConstructor;
@@ -48,9 +49,8 @@ public class ProfessorController {
                     @ApiResponse(responseCode = "500", description = "서버와의 연결에 실패했습니다.")
             }
     )
-    public ResponseEntity<SuccessResponse<ProfessorInfoResponse>> getProfileInfo(HttpServletRequest request) {
-        String oauthId = (String) request.getAttribute("oauthId");
-        ProfessorInfoResponse response = professorService.getProfileInfo(oauthId);
+    public ResponseEntity<SuccessResponse<ProfessorInfoResponse>> getProfileInfo(LoginProfessor loginProfessor) {
+        ProfessorInfoResponse response = professorService.getProfileInfo(loginProfessor.id());
 
         return ResponseEntity
                 .status(HttpStatus.OK)
@@ -67,9 +67,8 @@ public class ProfessorController {
                     @ApiResponse(responseCode = "500", description = "서버와의 연결에 실패했습니다.")
             }
     )
-    public ResponseEntity<SuccessResponse<Map<String, String>>> getProfileImage(HttpServletRequest request) {
-        String oauthId = (String) request.getAttribute("oauthId");
-        Map<String, String> response = professorService.getProfileImage(oauthId);
+    public ResponseEntity<SuccessResponse<Map<String, String>>> getProfileImage(LoginProfessor loginProfessor) {
+        Map<String, String> response = professorService.getProfileImage(loginProfessor.id());
 
         return ResponseEntity
                 .status(HttpStatus.OK)
@@ -87,11 +86,9 @@ public class ProfessorController {
             }
     )
     public ResponseEntity<SuccessResponse<Map<String, String>>> updateName(
-            @Valid @RequestBody UpdateNameRequest requestDto,
-            HttpServletRequest request) {
-        String oauthId = (String) request.getAttribute("oauthId");
-        String newName = requestDto.getName();
-        Map<String, String> response = professorService.updateName(oauthId, newName);
+            LoginProfessor loginProfessor,
+            @Valid @RequestBody UpdateNameRequest requestDto) {
+        Map<String, String> response = professorService.updateName(loginProfessor.id(), requestDto.getName());
 
         return ResponseEntity
                 .status(HttpStatus.OK)
@@ -110,10 +107,9 @@ public class ProfessorController {
             }
     )
     public ResponseEntity<SuccessResponse<Map<String, String>>> updateImage(
-            @RequestPart(value = "profileImage", required = false) MultipartFile profileImageFile,
-            HttpServletRequest request) {
-        String oauthId = (String) request.getAttribute("oauthId");
-        Map<String, String> imageUrl = professorService.updateImage(oauthId, profileImageFile);
+            LoginProfessor loginProfessor,
+            @RequestPart(value = "profileImage", required = false) MultipartFile profileImageFile) {
+        Map<String, String> imageUrl = professorService.updateImage(loginProfessor.id(), profileImageFile);
 
         return ResponseEntity
                 .status(HttpStatus.OK)
@@ -188,9 +184,8 @@ public class ProfessorController {
                     @ApiResponse(responseCode = "204", description = "성공적으로 탈퇴되었습니다."),
             }
     )
-    public ResponseEntity<Void> delete(HttpServletRequest request) {
-        String oauthId = (String) request.getAttribute("oauthId");
-        professorService.delete(oauthId);
+    public ResponseEntity<Void> delete(LoginProfessor loginProfessor) {
+        professorService.delete(loginProfessor.id());
 
         ResponseCookie jwtCookie = ResponseCookie.from("access_token", "")
                 .httpOnly(true)
