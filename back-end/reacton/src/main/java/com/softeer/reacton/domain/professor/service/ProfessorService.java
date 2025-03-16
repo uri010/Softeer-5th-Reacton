@@ -62,19 +62,17 @@ public class ProfessorService {
                 .profileImageFileName(fileName)
                 .profileImageS3Key(s3Key)
                 .build();
-        long professorId = professorRepository.save(professor).getId();
+        Long professorId = professorRepository.save(professor).getId();
 
         log.info("[SignUp Completed] email = {}, name = {}, fileName = {}", email, name, fileName);
         return jwtTokenUtil.createAuthAccessToken(professorId);
     }
 
     @Transactional
-    public void delete(String oauthId) {
-        log.info("[Delete Professor Start] oauthId = {}", oauthId);
+    public void delete(Long professorId) {
+        log.info("[Delete Professor Start] professorId = {}", professorId);
 
-        Professor professor = professorRepository.findByOauthId(oauthId)
-                .orElseThrow(() -> new BaseException(ProfessorErrorCode.PROFESSOR_NOT_FOUND));
-
+        Professor professor = getProfessorById(professorId);
         professorFileService.deleteProfileImageIfExists(professor);
 
         List<Course> courses = professorCourseQueryService.getCoursesByProfessor(professor);
@@ -93,52 +91,49 @@ public class ProfessorService {
         log.info("[Delete Professor Completed] email = {}", professor.getEmail());
     }
 
-    public ProfessorInfoResponse getProfileInfo(String oauthId) {
-        log.info("[Get Profile Info] oauthId = {}", oauthId);
+    public ProfessorInfoResponse getProfileInfo(Long professorId) {
+        log.info("[Get Profile Info] professorId = {}", professorId);
 
-        Professor professor = professorRepository.findByOauthId(oauthId)
-                .orElseThrow(() -> new BaseException(ProfessorErrorCode.USER_NOT_FOUND));
+        Professor professor = getProfessorById(professorId);
 
         String profileImageUrl = professorFileService.generatePresignedUrl(professor);
 
         return new ProfessorInfoResponse(professor.getName(), professor.getEmail(), String.valueOf(profileImageUrl));
     }
 
-    public Map<String, String> getProfileImage(String oauthId) {
-        log.info("[Get Profile Image] oauthId = {}", oauthId);
+    public Map<String, String> getProfileImage(Long professorId) {
+        log.info("[Get Profile Image] professorId = {}", professorId);
 
-        Professor professor = professorRepository.findByOauthId(oauthId)
-                .orElseThrow(() -> new BaseException(ProfessorErrorCode.USER_NOT_FOUND));
+        Professor professor = getProfessorById(professorId);
 
         String imageUrl = professorFileService.generatePresignedUrl(professor);
         return Map.of("imageUrl", imageUrl);
     }
 
-    public Map<String, String> updateName(String oauthId, String newName) {
-        log.info("[Update Name Start] oauthId = {}, newName = {}", oauthId, newName);
+    public Map<String, String> updateName(Long professorId, String newName) {
+        log.info("[Update Name Start] professorId = {}, newName = {}", professorId, newName);
 
-        int updatedRows = professorRepository.updateName(oauthId, newName);
+        int updatedRows = professorRepository.updateName(professorId, newName);
         if (updatedRows == 0) {
             throw new BaseException(ProfessorErrorCode.USER_NOT_FOUND);
         }
 
-        log.info("[Update Name Completed] oauthId = {}, newName = {}", oauthId, newName);
+        log.info("[Update Name Completed] professorId = {}, newName = {}", professorId, newName);
         return Map.of("name", newName);
     }
 
     @Transactional
-    public Map<String, String> updateImage(String oauthId, MultipartFile file) {
-        log.info("[Update Profile Image Start] oauthId = {}", oauthId);
+    public Map<String, String> updateImage(Long professorId, MultipartFile file) {
+        log.info("[Update Profile Image Start] professorId = {}", professorId);
 
-        Professor professor = professorRepository.findByOauthId(oauthId)
-                .orElseThrow(() -> new BaseException(ProfessorErrorCode.PROFESSOR_NOT_FOUND));
+        Professor professor = getProfessorById(professorId);
 
         professorFileService.deleteProfileImageIfExists(professor);
         String profileImageFileName = file.getOriginalFilename();
         String profileImageS3Key = professorFileService.uploadProfileImage(file);
 
         try {
-            updateUserProfileImage(oauthId, profileImageFileName, profileImageS3Key);
+            updateUserProfileImage(professorId, profileImageFileName, profileImageS3Key);
         } catch (Exception e) {
             professorFileService.deleteFileByS3key(profileImageS3Key);
             throw new BaseException(FileErrorCode.FILE_UPLOAD_FAILED_DB_ROLLBACK);
@@ -146,23 +141,17 @@ public class ProfessorService {
 
         String imageUrl = professorFileService.generatePresignedUrl(professor);
 
-        log.info("[Update Profile Image Completed] oauthId = {}, imageUrl = {}", oauthId, imageUrl);
+        log.info("[Update Profile Image Completed] professorId = {}, imageUrl = {}", professorId, imageUrl);
         return Map.of("imageUrl", imageUrl);
     }
 
-    public Long getProfessorIdByOauthId(String oauthId) {
-        return professorRepository.findProfessorIdByOauthId(oauthId)
-                .orElseThrow(() -> new BaseException(ProfessorErrorCode.PROFESSOR_NOT_FOUND));
+    public Professor getProfessorById(Long id) {
+        return professorRepository.findById(id).orElseThrow(() -> new BaseException(ProfessorErrorCode.PROFESSOR_NOT_FOUND));
     }
 
-    public Professor getProfessorByOauthId(String oauthId) {
-        return professorRepository.findByOauthId(oauthId)
-                .orElseThrow(() -> new BaseException(ProfessorErrorCode.PROFESSOR_NOT_FOUND));
-    }
-
-    private void updateUserProfileImage(String oauthId, String profileImageFileName, String profileImageS3Key) {
+    private void updateUserProfileImage(Long professorId, String profileImageFileName, String profileImageS3Key) {
         try {
-            int updatedRows = professorRepository.updateImage(oauthId, profileImageFileName, profileImageS3Key);
+            int updatedRows = professorRepository.updateImage(professorId, profileImageFileName, profileImageS3Key);
             if (updatedRows == 0) {
                 throw new BaseException(ProfessorErrorCode.USER_NOT_FOUND);
             }
