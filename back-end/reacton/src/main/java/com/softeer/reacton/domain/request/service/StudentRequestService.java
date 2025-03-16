@@ -18,14 +18,17 @@ public class StudentRequestService {
 
     public void sendRequest(Long courseId, RequestSendRequest requestSendRequest) {
         String content = requestSendRequest.getContent();
-        log.debug("요청 처리를 시작합니다. : content = {}", content);
+        log.info("[Send Request Start] courseId = {}, content = {}", courseId, content);
 
         requestService.incrementRequestCount(content, courseId);
 
         RequestSseRequest requestSseRequest = new RequestSseRequest(content);
 
-        log.debug("SSE 서버에 요청 전송을 요청합니다.");
+        log.info("[SSE Message Sending] courseId = {}, content = {}", courseId, content);
+
         SseMessage<RequestSseRequest> sseMessage = new SseMessage<>("REQUEST", requestSseRequest);
         sseMessageSender.sendMessage(courseId.toString(), sseMessage);
+
+        log.info("[Send Request Completed] courseId = {}, content = {}", courseId, content);
     }
 }

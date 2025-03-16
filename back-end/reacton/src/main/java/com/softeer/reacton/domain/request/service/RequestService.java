@@ -29,35 +29,45 @@ public class RequestService {
 
     @Transactional
     public void incrementRequestCount(String content, Long courseId) {
+        log.info("[Increment Request Count Start] courseId = {}, content = {}", courseId, content);
+
         Course course = studentCourseService.getCourseById(courseId);
         checkIfOpen(course);
 
-        log.debug("요청을 저장합니다.");
         try {
             int updatedRows = requestRepository.incrementCount(course, content);
             if (updatedRows == 0) {
-                log.debug("요청 데이터를 처리하는 과정에서 발생한 에러입니다. : Request does not exist.");
                 throw new BaseException(RequestErrorCode.REQUEST_NOT_FOUND);
             }
         } catch (DataIntegrityViolationException e) {
-            log.debug("요청 데이터를 처리하는 과정에서 발생한 에러입니다. : {}", e.getMessage());
             throw new BaseException(RequestErrorCode.REQUEST_OVERFLOW);
         }
     }
 
     @Transactional
     public void deleteAllByCourseId(Long courseId) {
-        requestRepository.deleteAllByCourseId(courseId);
+        log.info("[Delete All Requests Start] courseId = {}", courseId);
+
+        int deletedCount = requestRepository.deleteAllByCourseId(courseId);
+        log.info("[Delete All Requests Completed] courseId = {}, deletedCount = {}", courseId, deletedCount);
     }
 
     public List<Request> createRequests(Course course) {
-        return RequestType.getRequestTypes().stream()
+        log.info("[Create Default Requests] courseId = {}", course.getId());
+
+        List<Request> requests = RequestType.getRequestTypes().stream()
                 .map(requestType -> Request.create(requestType, course))
                 .collect(Collectors.toList());
+
+        log.info("[Default Requests Created] courseId = {}, totalRequests = {}", course.getId(), requests.size());
+        return requests;
     }
 
     public List<CourseRequestResponse> getRequestsByCourseInOrder(Course course) {
+        log.info("[Get Requests Start] courseId = {}", course.getId());
+
         List<Request> requests = course.getRequests();
+        log.info("[Get Requests Completed] courseId = {}, requestCount = {}", course.getId(), requests.size());
 
         return requests.stream()
                 .map(request -> new CourseRequestResponse(
@@ -68,7 +78,10 @@ public class RequestService {
     }
 
     public void resetCountByCourseId(Long courseId) {
-        requestRepository.resetCountByCourseId(courseId);
+        log.info("[Reset Request Count Start] courseId = {}", courseId);
+
+        int resetCount = requestRepository.resetCountByCourseId(courseId);
+        log.info("[Reset Request Count Completed] courseId = {}, resetCount = {}", courseId, resetCount);
     }
 
     private void checkIfOpen(Course course) {
