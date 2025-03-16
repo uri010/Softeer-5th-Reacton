@@ -24,9 +24,6 @@ public class OAuthController {
     private final OAuthService oauthService;
     private final CookieConfig cookieConfig;
 
-    @Value("${frontend.base-url}")
-    private String FRONTEND_BASE_URL;
-
     @GetMapping("/{provider}/url")
     @Operation(
             summary = "OAuth 로그인 요청",
@@ -60,18 +57,12 @@ public class OAuthController {
 
         ResponseCookie jwtCookie = ResponseCookie.from(cookieName, loginResult.getAccessToken())
                 .httpOnly(true)
-                .secure(true)
+                .secure(false)
                 .path("/")
                 .maxAge(isSignedUp ? cookieConfig.getAuthExpiration() : cookieConfig.getSignupExpiration())
                 .sameSite("Strict")
-                .domain(cookieConfig.getDomain())
                 .build();
 
-        ResponseEntity.BodyBuilder response = ResponseEntity.status(HttpStatus.SEE_OTHER)
-                .header(HttpHeaders.SET_COOKIE, jwtCookie.toString());
-
-        String redirectUrl = isSignedUp ? "professor/loading" : "professor/register";
-
-        return response.header(HttpHeaders.LOCATION, FRONTEND_BASE_URL + redirectUrl).build();
+        return ResponseEntity.status(HttpStatus.OK).header(HttpHeaders.SET_COOKIE, jwtCookie.toString()).build();
     }
 }

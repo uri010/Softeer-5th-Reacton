@@ -35,9 +35,6 @@ public class ProfessorCourseController {
     private final ProfessorCourseQueryService professorCourseQueryService;
     private final ProfessorService professorService;
 
-    @Value("${frontend.base-url}")
-    private String FRONTEND_BASE_URL;
-
     @GetMapping("/active")
     @Operation(
             summary = "활성화된 수업 조회",
@@ -54,8 +51,7 @@ public class ProfessorCourseController {
             return ResponseEntity.status(HttpStatus.OK)
                     .body(SuccessResponse.of("활성화된 수업이 존재합니다.", activeCourse));
         } else {
-            return ResponseEntity.status(HttpStatus.SEE_OTHER)
-                    .header(HttpHeaders.LOCATION, FRONTEND_BASE_URL + "professor")
+            return ResponseEntity.status(HttpStatus.NO_CONTENT)
                     .build();
         }
     }

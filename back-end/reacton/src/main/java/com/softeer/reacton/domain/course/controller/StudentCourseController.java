@@ -26,9 +26,6 @@ public class StudentCourseController {
     private final StudentCourseService studentCourseService;
     private final CookieConfig cookieConfig;
 
-    @Value("${frontend.base-url}")
-    private String FRONTEND_BASE_URL;
-
     @GetMapping("/{accessCode}/summary")
     @Operation(
             summary = "학생 수업 정보 조회",
@@ -64,7 +61,7 @@ public class StudentCourseController {
         String newAccessToken = studentCourseService.registerCourse(accessCode);
         ResponseCookie jwtCookie = ResponseCookie.from("student_access_token", newAccessToken)
                 .httpOnly(true)
-                .secure(true)
+                .secure(false)
                 .path("/")
                 .maxAge(cookieConfig.getStudentAccessExpiration())
                 .sameSite("Strict")
@@ -72,8 +69,7 @@ public class StudentCourseController {
                 .build();
 
         return ResponseEntity
-                .status(HttpStatus.SEE_OTHER)
-                .header(HttpHeaders.LOCATION, FRONTEND_BASE_URL + "student/course")
+                .status(HttpStatus.OK)
                 .header(HttpHeaders.SET_COOKIE, jwtCookie.toString())
                 .build();
     }

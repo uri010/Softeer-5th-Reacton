@@ -36,9 +36,6 @@ public class ProfessorController {
     private final ProfessorService professorService;
     private final CookieConfig cookieConfig;
 
-    @Value("${frontend.base-url}")
-    private String FRONTEND_BASE_URL;
-
     @GetMapping
     @Operation(
             summary = "교수 프로필 정보 조회",
@@ -132,19 +129,26 @@ public class ProfessorController {
             @RequestPart(value = "profileImage", required = false) MultipartFile profileImageFile) {
         String newAccessToken = professorService.signUp(name, profileImageFile, signTokenInfo.oauthId(), signTokenInfo.email(), signTokenInfo.isSignedUp());
 
+        ResponseCookie expiredSignupCookie = ResponseCookie.from("signup_token", "")
+                .httpOnly(true)
+                .secure(false)
+                .path("/")
+                .maxAge(0)
+                .sameSite("Strict")
+                .build();
+
         ResponseCookie jwtCookie = ResponseCookie.from("access_token", newAccessToken)
                 .httpOnly(true)
-                .secure(true)
+                .secure(false)
                 .path("/")
                 .maxAge(cookieConfig.getAuthExpiration())
                 .sameSite("Strict")
-                .domain(cookieConfig.getDomain())
                 .build();
 
         return ResponseEntity
-                .status(HttpStatus.SEE_OTHER)
-                .header(HttpHeaders.LOCATION, FRONTEND_BASE_URL + "professor")
+                .status(HttpStatus.CREATED)
                 .header(HttpHeaders.SET_COOKIE, jwtCookie.toString())
+                .header(HttpHeaders.SET_COOKIE, expiredSignupCookie.toString())
                 .build();
     }
 
@@ -159,16 +163,14 @@ public class ProfessorController {
     public ResponseEntity<Void> logout() {
         ResponseCookie jwtCookie = ResponseCookie.from("access_token", "")
                 .httpOnly(true)
-                .secure(true)
+                .secure(false)
                 .path("/")
                 .maxAge(0)
                 .sameSite("Strict")
-                .domain(cookieConfig.getDomain())
                 .build();
 
         return ResponseEntity
-                .status(HttpStatus.SEE_OTHER)
-                .header(HttpHeaders.LOCATION, FRONTEND_BASE_URL)
+                .status(HttpStatus.OK)
                 .header(HttpHeaders.SET_COOKIE, jwtCookie.toString())
                 .build();
     }
@@ -186,16 +188,14 @@ public class ProfessorController {
 
         ResponseCookie jwtCookie = ResponseCookie.from("access_token", "")
                 .httpOnly(true)
-                .secure(true)
+                .secure(false)
                 .path("/")
                 .maxAge(0)
                 .sameSite("Strict")
-                .domain(cookieConfig.getDomain())
                 .build();
 
         return ResponseEntity
-                .status(HttpStatus.SEE_OTHER)
-                .header(HttpHeaders.LOCATION, FRONTEND_BASE_URL)
+                .status(HttpStatus.OK)
                 .header(HttpHeaders.SET_COOKIE, jwtCookie.toString())
                 .build();
     }
