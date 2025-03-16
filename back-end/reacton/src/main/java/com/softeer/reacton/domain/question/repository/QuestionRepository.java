@@ -23,9 +23,9 @@ public interface QuestionRepository extends JpaRepository<Question, Long> {
     @Transactional
     @Query("DELETE FROM Question q " +
             "WHERE q.course = :course AND q.isComplete = true")
-    void deleteCompleteByCourse(@Param("course") Course course);
+    int deleteCompleteByCourse(@Param("course") Course course);
 
     @Modifying
     @Query("DELETE FROM Question q WHERE q.course.id = :courseId")
-    void deleteAllByCourseId(Long courseId);
+    int deleteAllByCourseId(Long courseId);
 }

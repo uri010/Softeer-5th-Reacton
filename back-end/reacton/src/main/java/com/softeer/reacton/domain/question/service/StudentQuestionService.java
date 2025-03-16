@@ -32,17 +32,19 @@ public class StudentQuestionService {
 
     @Transactional(readOnly = true)
     public QuestionAllResponse getQuestionsByStudentId(String studentId, Long courseId) {
-        log.debug("이전에 질문했던 목록을 조회합니다. : studentId = {}, courseId = {}", studentId, courseId);
+        log.info("[Get Student Questions Start] studentId = {}, courseId = {}", studentId, courseId);
 
         Course course = getCourse(courseId);
         List<CourseQuestionResponse> questions = findQuestionsNotComplete(studentId, course);
 
+        log.info("[Get Student Questions Completed] studentId = {}, courseId = {}, questionCount = {}",
+                studentId, courseId, questions.size());
         return QuestionAllResponse.of(questions);
     }
 
     public CourseQuestionResponse sendQuestion(String studentId, Long courseId, QuestionSendRequest questionSendRequest) {
         String content = questionSendRequest.getContent();
-        log.debug("질문 처리를 시작합니다. : content = {}", content);
+        log.info("[Send Question Start] studentId = {}, courseId = {}, content = {}", studentId, courseId, content);
 
         Question question = questionService.saveQuestion(studentId, content, courseId);
 
@@ -52,26 +54,29 @@ public class StudentQuestionService {
                 question.getContent()
         );
 
-        log.debug("SSE 서버에 질문 전송을 요청합니다.");
+        log.info("[SSE Message Sending] studentId = {}, courseId = {}, questionId = {}",
+                studentId, courseId, question.getId());
         SseMessage<CourseQuestionResponse> sseMessage = new SseMessage<>("QUESTION", courseQuestionResponse);
         sseMessageSender.sendMessage(courseId.toString(), sseMessage);
 
-        log.debug("질문 처리가 완료되었습니다.");
+        log.info("[Send Question Completed] studentId = {}, courseId = {}, questionId = {}",
+                studentId, courseId, question.getId());
         return courseQuestionResponse;
     }
 
     public void sendQuestionCheck(Long courseId, Long questionId) {
-        log.debug("질문 체크 처리를 시작합니다. : questionId = {}", questionId);
+        log.info("[Send Question Check Start] courseId = {}, questionId = {}", courseId, questionId);
 
         questionService.checkQuestion(questionId);
 
         QuestionCheckSseRequest questionCheckSseRequest = new QuestionCheckSseRequest(questionId);
 
-        log.debug("SSE 서버에 질문 체크 전송을 요청합니다.");
+        log.info("[SSE Question Check Sending] courseId = {}, questionId = {}", courseId, questionId);
+
         SseMessage<QuestionCheckSseRequest> sseMessage = new SseMessage<>("QUESTION_CHECK", questionCheckSseRequest);
         sseMessageSender.sendMessage(courseId.toString(), sseMessage);
 
-        log.debug("질문 체크 처리가 완료되었습니다.");
+        log.info("[Send Question Check Completed] courseId = {}, questionId = {}", courseId, questionId);
     }
 
     private Course getCourse(Long courseId) {

@@ -26,17 +26,21 @@ public class QuestionService {
 
     @Transactional
     public Question checkQuestion(Long questionId) {
+        log.info("[Check Question Start] questionId = {}", questionId);
+
         Question question = getQuestion(questionId);
         Course course = question.getCourse();
         checkIfOpen(course);
 
         question.setIsComplete(true);
-        log.debug("질문을 체크합니다. : questionId = {}", questionId);
+        log.info("[Check Question Completed] questionId = {}, courseId = {}", questionId, course.getId());
         return questionRepository.save(question);
     }
 
     @Transactional
     public Question saveQuestion(String studentId, String content, Long courseId) {
+        log.info("[Save Question Start] studentId = {}, courseId = {}", studentId, courseId);
+
         Course course = studentCourseService.getCourseById(courseId);
         checkIfOpen(course);
 
@@ -46,21 +50,33 @@ public class QuestionService {
                 .course(course)
                 .build();
 
-        log.debug("질문을 저장합니다. : questionId = {}", question.getId());
-        return questionRepository.save(question);
+        Question savedQuestion = questionRepository.save(question);
+        log.info("[Save Question Completed] questionId = {}, studentId = {}, courseId = {}", savedQuestion.getId(), studentId, courseId);
+        return savedQuestion;
     }
 
     @Transactional
     public void deleteAllByCourseId(Long courseId) {
-        questionRepository.deleteAllByCourseId(courseId);
+        log.info("[Delete All Questions Start] courseId = {}", courseId);
+
+        int deletedCount = questionRepository.deleteAllByCourseId(courseId);
+
+        log.info("[Delete All Questions Completed] courseId = {}, deletedCount = {}", courseId, deletedCount);
     }
 
     public void deleteCompleteByCourse(Course course) {
-        questionRepository.deleteCompleteByCourse(course);
+        log.info("[Delete Completed Questions Start] courseId = {}", course.getId());
+
+        int deletedCount = questionRepository.deleteCompleteByCourse(course);
+
+        log.info("[Delete Completed Questions Completed] courseId = {}, deletedCount = {}", course.getId(), deletedCount);
     }
 
     public List<CourseQuestionResponse> getQuestionsByCourseInOrder(Course course) {
+        log.info("[Get Questions Start] courseId = {}", course.getId());
+
         List<Question> questions = questionRepository.findNotCompleteByCourse(course);
+        log.info("[Get Questions Completed] courseId = {}, questionCount = {}", course.getId(), questions.size());
 
         return questions.stream()
                 .map(question -> new CourseQuestionResponse(
