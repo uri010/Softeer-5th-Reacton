@@ -56,7 +56,9 @@ public class OAuthController {
         OAuthLoginResult loginResult = oauthService.processOauthLogin(provider, code);
         boolean isSignedUp = loginResult.isSignedUp();
 
-        ResponseCookie jwtCookie = ResponseCookie.from("access_token", loginResult.getAccessToken())
+        String cookieName = isSignedUp ? "access_token" : "signup_token";
+
+        ResponseCookie jwtCookie = ResponseCookie.from(cookieName, loginResult.getAccessToken())
                 .httpOnly(true)
                 .secure(true)
                 .path("/")
@@ -67,7 +69,7 @@ public class OAuthController {
 
         ResponseEntity.BodyBuilder response = ResponseEntity.status(HttpStatus.SEE_OTHER)
                 .header(HttpHeaders.SET_COOKIE, jwtCookie.toString());
-        log.debug(FRONTEND_BASE_URL);
+
         String redirectUrl = isSignedUp ? "professor/loading" : "professor/register";
 
         return response.header(HttpHeaders.LOCATION, FRONTEND_BASE_URL + redirectUrl).build();
