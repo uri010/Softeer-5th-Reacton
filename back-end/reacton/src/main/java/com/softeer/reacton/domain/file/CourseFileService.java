@@ -20,27 +20,42 @@ public class CourseFileService {
     private static final int PRESIGNED_URL_EXPIRATION_MINUTES = 1;
 
     public String uploadFile(MultipartFile file) {
+        log.info("[File Upload Start] fileName = {}", file.getOriginalFilename());
+
         if (!validateFile(file)) {
             return null;
         }
-        return s3Service.uploadFile(file, FILE_DIRECTORY);
+
+        String s3Key = s3Service.uploadFile(file, FILE_DIRECTORY);
+        log.info("[File Upload Completed] fileName = {}, s3Key = {}", file.getOriginalFilename(), s3Key);
+        return s3Key;
     }
 
     public void deleteFileIfExists(Course course) {
         if (isFileExists(course)) {
+            log.info("[File Deletion Start] fileName = {}, s3Key = {}", course.getFileName(), course.getFileS3Key());
             s3Service.deleteFile(course.getFileS3Key());
-            log.debug("기존 강의자료 파일 삭제 완료: fileName = {}", course.getFileName());
+            log.info("[File Deletion Completed] fileName = {}", course.getFileName());
         }
     }
 
     public String generatePresignedUrl(Course course) {
-        return isFileExists(course)
-                ? s3Service.generatePresignedUrl(course.getFileS3Key(), PRESIGNED_URL_EXPIRATION_MINUTES).toString()
-                : "";
+        log.info("[Generate Presigned URL Start] courseId = {}", course.getId());
+
+        if (!isFileExists(course)) {
+            log.warn("[Generate Presigned URL Failed] No file found for courseId = {}", course.getId());
+            return "";
+        }
+
+        String url = s3Service.generatePresignedUrl(course.getFileS3Key(), PRESIGNED_URL_EXPIRATION_MINUTES).toString();
+        log.info("[Generate Presigned URL Completed] courseId = {}, fileUrl = {}", course.getId(), url);
+        return url;
     }
 
-    public void deleteFileByS3key(String profileImageS3Key) {
-        s3Service.deleteFile(profileImageS3Key);
+    public void deleteFileByS3key(String fileS3Key) {
+        log.info("[File Deletion Start] s3Key = {}", fileS3Key);
+        s3Service.deleteFile(fileS3Key);
+        log.info("[File Deletion Completed] s3Key = {}", fileS3Key);
     }
 
     public boolean isFileExists(Course course) {
