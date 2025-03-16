@@ -22,16 +22,19 @@ public class StudentReactionService {
 
     public void sendReaction(Long courseId, ReactionSendRequest reactionSendRequest) {
         String content = reactionSendRequest.getContent();
-        log.debug("반응 처리를 시작합니다. : content = {}", content);
+        log.info("[Send Reaction Start] courseId = {}, content = {}", courseId, content);
 
         Course course = getCourse(courseId);
         checkIfOpen(course);
 
         ReactionSseRequest reactionSseRequest = new ReactionSseRequest(content);
 
-        log.debug("SSE 서버에 반응 전송을 요청합니다.");
+        log.info("[SSE Message Sending] courseId = {}, content = {}", courseId, content);
+
         SseMessage<ReactionSseRequest> sseMessage = new SseMessage<>("REACTION", reactionSseRequest);
         sseMessageSender.sendMessage(courseId.toString(), sseMessage);
+
+        log.info("[Send Reaction Completed] courseId = {}, content = {}", courseId, content);
     }
 
     private Course getCourse(Long courseId) {

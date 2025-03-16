@@ -25,26 +25,40 @@ public class ProfessorFileService {
 
     public void deleteProfileImageIfExists(Professor professor) {
         if (isFileExists(professor)) {
+            log.info("[Profile Image Deletion Start] professorId = {}, s3Key = {}", professor.getId(), professor.getProfileImageS3Key());
             s3Service.deleteFile(professor.getProfileImageS3Key());
-            log.debug("기존 프로필 이미지 삭제 완료: {}", professor.getProfileImageS3Key());
+            log.info("[Profile Image Deletion Completed] professorId = {}", professor.getId());
         }
     }
 
     public String uploadProfileImage(MultipartFile file) {
+        log.info("[Profile Image Upload Start] fileName = {}", file.getOriginalFilename());
+
         if (!validateProfileImage(file)) {
             return null;
         }
-        return s3Service.uploadFile(file, PROFILE_DIRECTORY);
+        String s3Key = s3Service.uploadFile(file, PROFILE_DIRECTORY);
+        log.info("[Profile Image Upload Completed] fileName = {}, s3Key = {}", file.getOriginalFilename(), s3Key);
+        return s3Key;
     }
 
     public String generatePresignedUrl(Professor professor) {
-        return isFileExists(professor)
-                ? s3Service.generatePresignedUrl(professor.getProfileImageS3Key(), PRESIGNED_URL_EXPIRATION_MINUTES).toString()
-                : "";
+        log.info("[Generate Presigned URL Start] professorId = {}", professor.getId());
+
+        if (!isFileExists(professor)) {
+            log.warn("[Generate Presigned URL Failed] No profile image found for professorId = {}", professor.getId());
+            return "";
+        }
+
+        String url = s3Service.generatePresignedUrl(professor.getProfileImageS3Key(), PRESIGNED_URL_EXPIRATION_MINUTES).toString();
+        log.info("[Generate Presigned URL Completed] professorId = {}, fileUrl = {}", professor.getId(), url);
+        return url;
     }
 
     public void deleteFileByS3key(String profileImageS3Key) {
+        log.info("[File Deletion Start] s3Key = {}", profileImageS3Key);
         s3Service.deleteFile(profileImageS3Key);
+        log.info("[File Deletion Completed] s3Key = {}", profileImageS3Key);
     }
 
     private boolean isFileExists(Professor professor) {

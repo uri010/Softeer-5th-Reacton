@@ -50,16 +50,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String requestUri = request.getRequestURI();
         String requestMethod = request.getMethod();
 
-        log.debug("JWT 토큰 관련 필터 작업을 수행합니다. : requestUri = {}", requestUri);
+        log.info("[JWT Filter Start] requestUri = {}, method = {}", requestUri, requestMethod);
 
-        if( requestMethod.equals("OPTIONS")) {
-            log.debug("필터를 적용하지 않는 OPTIONS 메서드입니다.");
+        if (requestMethod.equals("OPTIONS")) {
+            log.info("[JWT Filter Skipped] OPTIONS method detected.");
             chain.doFilter(request, response);
             return;
         }
 
         if (isWhiteListed(requestUri)) {
-            log.debug("필터를 적용하지 않는 URL 주소입니다. : requestUri = {}", requestUri);
+            log.info("[JWT Filter Skipped] Whitelisted URL detected: requestUri = {}", requestUri);
             chain.doFilter(request, response);
             return;
         }
@@ -85,7 +85,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         request.setAttribute("studentId", userInfo.get("studentId"));
         request.setAttribute("courseId", userInfo.get("courseId"));
 
-        log.debug("학생 사용자의 JWT 검증에 성공했습니다. : studentId = {}", userInfo.get("studentId"));
+        log.info("[JWT Validation Success] Student: studentId = {}, courseId = {}", userInfo.get("studentId"), userInfo.get("courseId"));
     }
 
     private void filterProfessor(HttpServletRequest request) {
@@ -97,7 +97,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         request.setAttribute("email", userInfo.get("email"));
         request.setAttribute("isSignedUp", userInfo.get("isSignedUp"));
 
-        log.debug("교수 사용자의 JWT 검증에 성공했습니다. : email = {}", userInfo.get("email"));
+        log.info("[JWT Validation Success] Professor: email = {}, oauthId = {}", userInfo.get("email"), userInfo.get("oauthId"));
     }
 
     private boolean isWhiteListed(String requestUri) {
@@ -106,7 +106,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private String getProfessorJwtFromCookie(HttpServletRequest request) {
         if (request.getCookies() == null) {
-            log.debug("교수 사용자의 쿠키가 존재하지 않습니다.");
+            log.warn("[JWT Missing] No professor cookie found.");
             return null;
         }
 
@@ -119,7 +119,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private String getStudentJwtFromCookie(HttpServletRequest request) {
         if (request.getCookies() == null) {
-            log.debug("학생 사용자의 쿠키가 존재하지 않습니다.");
+            log.warn("[JWT Missing] No student cookie found.");
             return null;
         }
 
@@ -135,7 +135,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     private void setErrorResponse(HttpServletResponse response, BaseException e) throws IOException {
-        log.warn(e.getErrorCode().getMessage());
+        log.error("[JWT Validation Failed] error = {}", e.getErrorCode().getMessage());
 
         ObjectMapper objectMapper = new ObjectMapper();
 

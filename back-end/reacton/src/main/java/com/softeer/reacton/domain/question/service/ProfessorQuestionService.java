@@ -17,17 +17,17 @@ public class ProfessorQuestionService {
     private final QuestionService questionService;
 
     public void sendQuestionCheck(Long questionId) {
-        log.debug("질문 체크 처리를 시작합니다. : questionId = {}", questionId);
+        log.info("[Send Question Check Start] questionId = {}", questionId);
 
         Question question = questionService.checkQuestion(questionId);
         String studentId = question.getStudentId();
 
         QuestionCheckSseRequest questionCheckSseRequest = new QuestionCheckSseRequest(questionId);
 
-        log.debug("SSE 서버에 질문 체크 전송을 요청합니다.");
+        log.info("[SSE Message Sending] questionId = {}, studentId = {}", questionId, studentId);
         SseMessage<QuestionCheckSseRequest> sseMessage = new SseMessage<>("QUESTION_CHECK", questionCheckSseRequest);
         sseMessageSender.sendMessage(studentId, sseMessage);
 
-        log.debug("질문 체크 처리가 완료되었습니다.");
+        log.info("[Send Question Check Completed] questionId = {}, studentId = {}", questionId, studentId);
     }
 }

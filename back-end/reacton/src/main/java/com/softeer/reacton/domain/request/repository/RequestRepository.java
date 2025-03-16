@@ -12,7 +12,7 @@ public interface RequestRepository extends JpaRepository<Request, Long> {
 
     @Modifying
     @Query("DELETE FROM Request r WHERE r.course.id = :courseId")
-    void deleteAllByCourseId(Long courseId);
+    int deleteAllByCourseId(Long courseId);
 
     @Modifying
     @Transactional
@@ -25,5 +25,5 @@ public interface RequestRepository extends JpaRepository<Request, Long> {
 
     @Modifying
     @Query("UPDATE Request r SET r.count = 0 WHERE r.course.id = :courseId")
-    void resetCountByCourseId(@Param("courseId") Long courseId);
+    int resetCountByCourseId(@Param("courseId") Long courseId);
 }

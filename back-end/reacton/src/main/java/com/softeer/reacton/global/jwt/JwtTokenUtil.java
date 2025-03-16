@@ -37,7 +37,7 @@ public class JwtTokenUtil {
     }
 
     public String createAuthAccessToken(String oauthId, String email) {
-        log.debug("로그인 JWT 토큰을 생성합니다. : email = {}", email);
+        log.info("[JWT Created] Auth Access Token: email = {}", email);
 
         return Jwts.builder()
                 .claim("oauthId", oauthId)
@@ -49,7 +49,7 @@ public class JwtTokenUtil {
     }
 
     public String createSignUpToken(String oauthId, String email) {
-        log.debug("회원가입 JWT 토큰을 생성합니다. : email = {}", email);
+        log.info("[JWT Created] SignUp Token: email = {}", email);
 
         return Jwts.builder()
                 .claim("oauthId", oauthId)
@@ -61,7 +61,7 @@ public class JwtTokenUtil {
     }
 
     public String createStudentAccessToken(String studentId, Long courseId) {
-        log.debug("학생 JWT 토큰을 생성합니다. : studentId = {}", studentId);
+        log.info("[JWT Created] Student Access Token: studentId = {}, courseId = {}", studentId, courseId);
 
         return Jwts.builder()
                 .claim("studentId", studentId)
@@ -72,25 +72,23 @@ public class JwtTokenUtil {
     }
 
     public void validateToken(String token) {
-        log.debug("JWT 토큰의 유효성을 검증합니다.");
+        log.info("[JWT Validation] Start");
 
         if (token == null || token.isBlank()) {
-            log.debug("JWT 토큰 검증 과정에서 발생한 에러입니다. : JWT token is missing or empty.");
             throw new BaseException(JwtErrorCode.ACCESS_TOKEN_ERROR);
         }
 
         try {
             Jwts.parserBuilder().setSigningKey(secretKey).build().parseClaimsJws(token);
         } catch (RuntimeException e) {
-            log.debug("JWT 토큰 검증 과정에서 발생한 에러입니다. : {}", e.getMessage());
             throw new BaseException(JwtErrorCode.ACCESS_TOKEN_ERROR);
         }
 
-        log.debug("토큰 유효성 검증이 완료되었습니다.");
+        log.info("[JWT Validation] Success");
     }
 
     public Map<String, Object> getProfessorInfoFromToken(String token) {
-        log.debug("토큰으로부터 교수 정보를 가져옵니다.");
+        log.info("[Extract JWT] Professor Info");
 
         Claims claims = getClaims(token);
 
@@ -99,11 +97,10 @@ public class JwtTokenUtil {
         Boolean isSignedUp = claims.get("isSignedUp", Boolean.class);
 
         if (oauthId == null || email == null || isSignedUp == null) {
-            log.debug("JWT 토큰으로부터 교수 정보를 가져오는 과정에서 발생한 에러입니다. : Missing required claims in JWT token.");
             throw new BaseException(JwtErrorCode.ACCESS_TOKEN_ERROR);
         }
 
-        log.debug("교수 정보를 가져오는 데 성공했습니다. : oauthId = {}, email = {}, isSignedUp = {}", oauthId, email, isSignedUp);
+        log.info("[Extract JWT Success] Professor: oauthId = {}, email = {}, isSignedUp = {}", oauthId, email, isSignedUp);
 
         return Map.of(
                 "oauthId", oauthId,
@@ -113,7 +110,7 @@ public class JwtTokenUtil {
     }
 
     public Map<String, Object> getStudentInfoFromToken(String token) {
-        log.debug("토큰으로부터 학생 정보를 가져옵니다.");
+        log.info("[Extract JWT] Student Info");
 
         Claims claims = getClaims(token);
 
@@ -121,11 +118,10 @@ public class JwtTokenUtil {
         Long courseId = claims.get("courseId", Long.class);
 
         if (studentId == null || courseId == null) {
-            log.debug("JWT 토큰으로부터 학생 정보를 가져오는 과정에서 발생한 에러입니다. : Missing required claims in JWT token.");
             throw new BaseException(JwtErrorCode.ACCESS_TOKEN_ERROR);
         }
 
-        log.debug("학생 정보를 가져오는 데 성공했습니다. : studentId = {}, courseId = {}", studentId, courseId);
+        log.info("[Extract JWT Success] Student: studentId = {}, courseId = {}", studentId, courseId);
 
         return Map.of(
                 "studentId", studentId,
@@ -141,7 +137,6 @@ public class JwtTokenUtil {
                     .parseClaimsJws(token)
                     .getBody();
         } catch (JwtException e) {
-            log.debug("JWT 토큰으로부터 사용자 정보를 가져오는 과정에서 발생한 에러입니다. : {}", e.getMessage());
             throw new BaseException(JwtErrorCode.ACCESS_TOKEN_ERROR);
         }
     }

@@ -34,11 +34,7 @@ public class OAuthController {
             responses = {@ApiResponse(responseCode = "302", description = "OAuth 로그인 페이지로 이동합니다.")}
     )
     public ResponseEntity<Void> getOauthLoginUrl(@PathVariable String provider) {
-        log.debug("OAuth 로그인 URL을 요청합니다.");
-
         String oauthLoginUrl = oauthService.getOauthLoginUrl(provider);
-
-        log.info("OAuth 로그인 URL을 생성했습니다.");
 
         return ResponseEntity.status(HttpStatus.SEE_OTHER)
                 .header(HttpHeaders.LOCATION, oauthLoginUrl)
@@ -57,8 +53,6 @@ public class OAuthController {
             }
     )
     public ResponseEntity<Void> oauthCallback(@PathVariable String provider, @RequestParam String code) {
-        log.debug("OAuth 콜백 요청에 대한 처리를 시작합니다.");
-
         OAuthLoginResult loginResult = oauthService.processOauthLogin(provider, code);
         boolean isSignedUp = loginResult.isSignedUp();
 
@@ -70,7 +64,6 @@ public class OAuthController {
                 .sameSite("Strict")
                 .domain(cookieConfig.getDomain())
                 .build();
-        log.debug("JWT 쿠키 설정이 완료되었습니다. : isSignedUp = {}", isSignedUp);
 
         ResponseEntity.BodyBuilder response = ResponseEntity.status(HttpStatus.SEE_OTHER)
                 .header(HttpHeaders.SET_COOKIE, jwtCookie.toString());

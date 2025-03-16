@@ -49,12 +49,8 @@ public class ProfessorController {
             }
     )
     public ResponseEntity<SuccessResponse<ProfessorInfoResponse>> getProfileInfo(HttpServletRequest request) {
-        log.debug("사용자의 이름, 이메일 주소, 프로필 이미지 url을 요청합니다.");
-
         String oauthId = (String) request.getAttribute("oauthId");
         ProfessorInfoResponse response = professorService.getProfileInfo(oauthId);
-
-        log.info("사용자의 이름, 이메일 주소, 프로필 이미지 url을 가져오는 데 성공했습니다.");
 
         return ResponseEntity
                 .status(HttpStatus.OK)
@@ -72,12 +68,8 @@ public class ProfessorController {
             }
     )
     public ResponseEntity<SuccessResponse<Map<String, String>>> getProfileImage(HttpServletRequest request) {
-        log.debug("사용자의 프로필 이미지를 요청합니다.");
-
         String oauthId = (String) request.getAttribute("oauthId");
         Map<String, String> response = professorService.getProfileImage(oauthId);
-
-        log.info("사용자의 프로필 이미지를 가져오는 데 성공했습니다.");
 
         return ResponseEntity
                 .status(HttpStatus.OK)
@@ -97,13 +89,9 @@ public class ProfessorController {
     public ResponseEntity<SuccessResponse<Map<String, String>>> updateName(
             @Valid @RequestBody UpdateNameRequest requestDto,
             HttpServletRequest request) {
-        log.debug("사용자의 이름 수정을 요청합니다.");
-
         String oauthId = (String) request.getAttribute("oauthId");
         String newName = requestDto.getName();
         Map<String, String> response = professorService.updateName(oauthId, newName);
-
-        log.info("사용자의 이름을 성공적으로 변경했습니다.");
 
         return ResponseEntity
                 .status(HttpStatus.OK)
@@ -124,12 +112,8 @@ public class ProfessorController {
     public ResponseEntity<SuccessResponse<Map<String, String>>> updateImage(
             @RequestPart(value = "profileImage", required = false) MultipartFile profileImageFile,
             HttpServletRequest request) {
-        log.debug("사용자의 프로필 이미지 수정을 요청합니다.");
-
         String oauthId = (String) request.getAttribute("oauthId");
         Map<String, String> imageUrl = professorService.updateImage(oauthId, profileImageFile);
-
-        log.info("사용자의 프로필 이미지를 성공적으로 변경했습니다.");
 
         return ResponseEntity
                 .status(HttpStatus.OK)
@@ -150,8 +134,6 @@ public class ProfessorController {
             @RequestPart("name") @Pattern(regexp = "^[가-힣a-zA-Z]{1,20}$", message = "이름은 한글 또는 영문만 1~20자 입력 가능합니다.") String name,
             @RequestPart(value = "profileImage", required = false) MultipartFile profileImageFile,
             HttpServletRequest request) {
-        log.debug("회원가입 요청을 호출합니다. : name = {}, profileImageFile = {}", name, profileImageFile != null ? "yes" : "no");
-
         String oauthId = (String) request.getAttribute("oauthId");
         String email = (String) request.getAttribute("email");
         boolean isSignedUp = (boolean) request.getAttribute("isSignedUp");
@@ -165,9 +147,6 @@ public class ProfessorController {
                 .sameSite("Strict")
                 .domain(cookieConfig.getDomain())
                 .build();
-
-        log.debug("회원가입에 성공했습니다 : name = {}", name);
-        log.info("회원가입에 성공했습니다.");
 
         return ResponseEntity
                 .status(HttpStatus.SEE_OTHER)

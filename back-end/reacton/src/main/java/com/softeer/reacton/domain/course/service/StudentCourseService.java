@@ -28,14 +28,11 @@ public class StudentCourseService {
     private final ScheduleRepository scheduleRepository;
 
     public CourseSummaryResponse getCourseByAccessCode(int accessCode) {
-        log.debug("입장코드와 일치하는 수업 정보를 조회합니다. : accessCode = {}", accessCode);
+        log.info("[Get Course By Access Code Start] accessCode = {}", accessCode);
 
         Optional<Course> existingCourse = courseRepository.findByAccessCode(accessCode);
 
-        Course course = existingCourse.orElseThrow(() -> {
-            log.debug("수업 정보를 가져오는 과정에서 발생한 에러입니다. : Course does not exist.");
-            return new BaseException(CourseErrorCode.COURSE_NOT_FOUND);
-        });
+        Course course = existingCourse.orElseThrow(() -> new BaseException(CourseErrorCode.COURSE_NOT_FOUND));
 
         if (!course.isActive()) {
             log.debug("수업 정보를 가져오는 과정에서 발생한 에러입니다. : Course is not active.");
@@ -44,20 +41,28 @@ public class StudentCourseService {
 
         List<CourseScheduleResponse> schedules = getSchedulesByCourseId(course);
 
+        log.info("[Get Course By Access Code Completed] courseId = {}", course.getId());
         return CourseSummaryResponse.of(course, schedules);
     }
 
     public String registerCourse(int accessCode) {
-        log.debug("accessCode와 일치하는 수업을 찾습니다. : accessCode = {}", accessCode);
+        log.info("[Register Course Start] accessCode = {}", accessCode);
+
         Course course = getCourse(accessCode);
         checkIfOpen(course);
 
         String studentId = UUID.randomUUID().toString();
-        log.debug("임시 studentId를 발급했습니다. : studentId = {}", studentId);
-        return jwtTokenUtil.createStudentAccessToken(studentId, course.getId());
+        log.info("[Generated Temporary Student ID] studentId = {}", studentId);
+
+        String token = jwtTokenUtil.createStudentAccessToken(studentId, course.getId());
+        log.info("[Register Course Completed] courseId = {}, studentId = {}", course.getId(), studentId);
+
+        return token;
     }
 
     public Course getCourseById(Long courseId) {
+        log.info("[Get Course By ID] courseId = {}", courseId);
+
         return courseRepository.findById(courseId).orElseThrow(() -> new BaseException(CourseErrorCode.COURSE_NOT_FOUND));
     }
 

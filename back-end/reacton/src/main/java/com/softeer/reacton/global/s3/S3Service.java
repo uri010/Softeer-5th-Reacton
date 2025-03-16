@@ -31,6 +31,8 @@ public class S3Service {
 
     public String uploadFile(MultipartFile file, String folder) {
         String fileName = folder + generateFileName(file);
+        log.info("[S3 File Upload Start] fileName = {}", fileName);
+
         try {
             PutObjectRequest putObjectRequest = PutObjectRequest.builder()
                     .bucket(bucketName)
@@ -41,54 +43,43 @@ public class S3Service {
 
             s3Client.putObject(putObjectRequest, RequestBody.fromInputStream(file.getInputStream(), file.getSize()));
 
-            log.info("S3 파일 업로드 완료: {}", fileName);
+            log.info("[S3 File Upload Completed] fileName = {}", fileName);
             return fileName;
         } catch (IOException e) {
-            log.error(FileErrorCode.FILE_READ_FAILED.getMessage());
             throw new BaseException(FileErrorCode.FILE_READ_FAILED);
-        } catch (S3Exception e) {
-            log.error("S3 파일 업로드 실패: {}", e.getMessage(), e);
-            throw e;
         }
     }
 
     public void deleteFile(String key) {
-        try {
-            DeleteObjectRequest deleteObjectRequest = DeleteObjectRequest.builder()
-                    .bucket(bucketName)
-                    .key(key)
-                    .build();
+        log.info("[S3 File Deletion Start] fileKey = {}", key);
+        DeleteObjectRequest deleteObjectRequest = DeleteObjectRequest.builder()
+                .bucket(bucketName)
+                .key(key)
+                .build();
 
-            s3Client.deleteObject(deleteObjectRequest);
+        s3Client.deleteObject(deleteObjectRequest);
 
-            log.info("S3 파일 삭제 완료: {}", key);
-        } catch (S3Exception e) {
-            log.error("S3 파일 삭제 실패: {}", e.getMessage(), e);
-            throw e;
-        }
+        log.info("[S3 File Deletion Completed] fileKey = {}", key);
     }
 
     public URL generatePresignedUrl(String key, int expirationMinutes) {
-        try {
-            GetObjectRequest getObjectRequest = GetObjectRequest.builder()
-                    .bucket(bucketName)
-                    .key(key)
-                    .build();
+        log.info("[Presigned URL Generation Start] fileKey = {}, expirationMinutes = {}", key, expirationMinutes);
 
-            GetObjectPresignRequest presignRequest = GetObjectPresignRequest.builder()
-                    .signatureDuration(Duration.ofMinutes(expirationMinutes))
-                    .getObjectRequest(getObjectRequest)
-                    .build();
+        GetObjectRequest getObjectRequest = GetObjectRequest.builder()
+                .bucket(bucketName)
+                .key(key)
+                .build();
 
-            PresignedGetObjectRequest presignedRequest = s3Presigner.presignGetObject(presignRequest);
+        GetObjectPresignRequest presignRequest = GetObjectPresignRequest.builder()
+                .signatureDuration(Duration.ofMinutes(expirationMinutes))
+                .getObjectRequest(getObjectRequest)
+                .build();
 
-            log.info("Presigned URL 생성 완료: {}", presignedRequest.url());
+        PresignedGetObjectRequest presignedRequest = s3Presigner.presignGetObject(presignRequest);
 
-            return presignedRequest.url();
-        } catch (S3Exception e) {
-            log.error("Presigned URL 생성 실패: {}", e.getMessage(), e);
-            throw e;
-        }
+        log.info("[Presigned URL Generation Completed] fileKey = {}, presignedUrl = {}", key, presignedRequest.url());
+
+        return presignedRequest.url();
     }
 
     private String generateFileName(MultipartFile file) {

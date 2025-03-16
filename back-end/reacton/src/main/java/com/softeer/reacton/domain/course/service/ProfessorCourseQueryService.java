@@ -33,24 +33,32 @@ public class ProfessorCourseQueryService {
     private final RequestService requestService;
 
     public List<Course> getCoursesByProfessor(Professor professor) {
-        return courseRepository.findByProfessor(professor);
+        log.info("[Get Courses Start] professorId = {}", professor.getId());
+
+        List<Course> courses = courseRepository.findByProfessor(professor);
+        log.info("[Get Courses Completed] professorId = {}, totalCourses = {}", professor.getId(), courses.size());
+
+        return courses;
     }
 
     public ActiveCourseResponse getActiveCourseByUser(Long professorId) {
-        log.debug("활성화된 수업을 조회합니다.");
+        log.info("[Get Active Course Start] professorId = {}", professorId);
 
         Pageable pageable = PageRequest.of(0, 1);
         List<Course> course = courseRepository.findLatestActiveCourseByProfessorId(professorId, pageable);
 
         if (!course.isEmpty()) {
             List<CourseScheduleResponse> schedules = scheduleService.getSchedulesByCourseInOrder(course.get(0));
+            log.info("[Get Active Course Completed] professorId = {}, courseId = {}", professorId, course.get(0).getId());
             return ActiveCourseResponse.of(course.get(0), schedules);
         }
+
+        log.info("[Get Active Course Completed] professorId = {}, no active courses found.", professorId);
         return null;
     }
 
     public CourseDetailResponse getCourseDetail(long courseId, Long professorId) {
-        log.debug("수업 상세 정보를 조회합니다.");
+        log.info("[Get Course Detail Start] professorId = {}, courseId = {}", professorId, courseId);
 
         Course course = courseRepository.findByIdAndProfessorId(courseId, professorId)
                 .orElseThrow(() -> new BaseException(CourseErrorCode.COURSE_NOT_FOUND));
@@ -59,22 +67,24 @@ public class ProfessorCourseQueryService {
         List<CourseQuestionResponse> questions = questionService.getQuestionsByCourseInOrder(course);
         List<CourseRequestResponse> requests = requestService.getRequestsByCourseInOrder(course);
 
-        log.debug("수업 상세 정보를 가져오는 데 성공했습니다. : courseId = {}", courseId);
+        log.info("[Get Course Detail Completed] courseId = {}, schedules = {}, questions = {}, requests = {}",
+                courseId, schedules.size(), questions.size(), requests.size());
         return CourseDetailResponse.of(course, schedules, questions, requests);
     }
 
     public CourseAllResponse getAllCourses(Long professorId) {
-        log.debug("전체 수업 목록을 조회합니다.");
+        log.info("[Get All Courses Start] professorId = {}", professorId);
 
         List<Course> allCourses = courseRepository.findCoursesWithSchedulesByProfessorId(professorId);
         List<CourseSummaryResponse> todayCoursesResponse = getTodayCoursesResponse(allCourses);
         List<CourseSummaryResponse> allCoursesResponse = getAllCoursesResponse(allCourses);
 
+        log.info("[Get All Courses Completed] professorId = {}, totalCourses = {}", professorId, allCourses.size());
         return CourseAllResponse.of(todayCoursesResponse, allCoursesResponse);
     }
 
     public List<CourseSummaryResponse> searchCourses(Long professorId, String keyword) {
-        log.debug("검색 결과를 조회합니다.");
+        log.info("[Search Courses Start] professorId = {}, keyword = '{}'", professorId, keyword);
 
         List<Course> searchCourses;
         if (keyword == null || keyword.isEmpty()) {
@@ -85,11 +95,13 @@ public class ProfessorCourseQueryService {
             searchCourses = courseRepository.findCoursesWithSchedulesByProfessorAndKeyword(professorId, searchKeyword);
         }
 
+        log.info("[Search Courses Completed] professorId = {}, keyword = '{}', foundCourses = {}", professorId, keyword, searchCourses.size());
         return getAllCoursesResponse(searchCourses);
     }
 
     private List<CourseSummaryResponse> getTodayCoursesResponse(List<Course> allCourses) {
         String currentDay = TimeUtil.getCurrentDay();
+        log.debug("[Filter Today Courses] currentDay = {}", currentDay);
 
         return allCourses.stream()
                 .filter(course -> hasScheduleInDay(course, currentDay))

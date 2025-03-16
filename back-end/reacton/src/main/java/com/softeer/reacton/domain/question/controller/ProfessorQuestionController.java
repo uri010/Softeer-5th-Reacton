@@ -36,11 +36,7 @@ public class ProfessorQuestionController {
     )
     public ResponseEntity<Void> checkQuestion(
             @PathVariable("questionId") Long questionId) {
-        log.debug("교수 사용자가 질문 체크를 등록 및 전송합니다.");
-
         professorQuestionService.sendQuestionCheck(questionId);
-
-        log.info("질문 체크를 성공적으로 등록했습니다.");
 
         return ResponseEntity
                 .status(HttpStatus.NO_CONTENT)
