@@ -2,10 +2,10 @@ package com.softeer.reacton.domain.reaction.controller;
 
 import com.softeer.reacton.domain.reaction.service.StudentReactionService;
 import com.softeer.reacton.domain.reaction.dto.ReactionSendRequest;
+import com.softeer.reacton.global.jwt.dto.StudentTokenInfo;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,11 +37,9 @@ public class StudentReactionController {
             }
     )
     public ResponseEntity<Void> sendReaction(
-            @Valid @RequestBody ReactionSendRequest reactionSendRequest,
-            HttpServletRequest request) {
-        Long courseId = (Long) request.getAttribute("courseId");
-
-        studentReactionService.sendReaction(courseId, reactionSendRequest);
+            StudentTokenInfo studentTokenInfo,
+            @Valid @RequestBody ReactionSendRequest reactionSendRequest) {
+        studentReactionService.sendReaction(studentTokenInfo.courseId(), reactionSendRequest);
 
         return ResponseEntity
                 .status(HttpStatus.NO_CONTENT)

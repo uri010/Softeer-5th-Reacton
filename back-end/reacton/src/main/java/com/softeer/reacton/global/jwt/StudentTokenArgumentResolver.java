@@ -36,7 +36,7 @@ public class StudentTokenArgumentResolver implements HandlerMethodArgumentResolv
         }
 
         Claims claims = jwtTokenUtil.getClaims(token);
-        Long studentId = claims.get("studentId", Long.class);
+        String studentId = claims.get("studentId", String.class);
         Long courseId = claims.get("courseId", Long.class);
 
         if (studentId == null || courseId == null) {

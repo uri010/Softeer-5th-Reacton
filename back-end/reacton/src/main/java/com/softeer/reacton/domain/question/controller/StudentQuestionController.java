@@ -5,10 +5,10 @@ import com.softeer.reacton.domain.question.service.StudentQuestionService;
 import com.softeer.reacton.domain.question.dto.QuestionAllResponse;
 import com.softeer.reacton.domain.question.dto.QuestionSendRequest;
 import com.softeer.reacton.global.dto.SuccessResponse;
+import com.softeer.reacton.global.jwt.dto.StudentTokenInfo;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,11 +36,8 @@ public class StudentQuestionController {
                     @ApiResponse(responseCode = "500", description = "서버와의 연결에 실패했습니다.")
             }
     )
-    public ResponseEntity<SuccessResponse<QuestionAllResponse>> getQuestions(HttpServletRequest request) {
-        String studentId = (String) request.getAttribute("studentId");
-        Long courseId = (Long) request.getAttribute("courseId");
-
-        QuestionAllResponse response = studentQuestionService.getQuestionsByStudentId(studentId, courseId);
+    public ResponseEntity<SuccessResponse<QuestionAllResponse>> getQuestions(StudentTokenInfo studentTokenInfo) {
+        QuestionAllResponse response = studentQuestionService.getQuestionsByStudentId(studentTokenInfo.studentId(), studentTokenInfo.courseId());
 
         return ResponseEntity
                 .status(HttpStatus.OK)
@@ -59,12 +56,9 @@ public class StudentQuestionController {
             }
     )
     public ResponseEntity<SuccessResponse<CourseQuestionResponse>> sendQuestion(
-            @Valid @RequestBody QuestionSendRequest questionSendRequest,
-            HttpServletRequest request) {
-        String studentId = (String) request.getAttribute("studentId");
-        Long courseId = (Long) request.getAttribute("courseId");
-
-        CourseQuestionResponse response = studentQuestionService.sendQuestion(studentId, courseId, questionSendRequest);
+            StudentTokenInfo studentTokenInfo,
+            @Valid @RequestBody QuestionSendRequest questionSendRequest) {
+        CourseQuestionResponse response = studentQuestionService.sendQuestion(studentTokenInfo.studentId(), studentTokenInfo.courseId(), questionSendRequest);
 
         return ResponseEntity
                 .status(HttpStatus.OK)
@@ -84,11 +78,9 @@ public class StudentQuestionController {
             }
     )
     public ResponseEntity<Void> checkQuestion(
-            @PathVariable("questionId") Long questionId,
-            HttpServletRequest request) {
-        Long courseId = (Long) request.getAttribute("courseId");
-
-        studentQuestionService.sendQuestionCheck(courseId, questionId);
+            StudentTokenInfo studentTokenInfo,
+            @PathVariable("questionId") Long questionId) {
+        studentQuestionService.sendQuestionCheck(studentTokenInfo.courseId(), questionId);
 
         return ResponseEntity
                 .status(HttpStatus.NO_CONTENT)
