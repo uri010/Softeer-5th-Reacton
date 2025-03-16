@@ -16,7 +16,7 @@ public class S3ExceptionHandler {
 
     @ExceptionHandler(NoSuchBucketException.class)
     public ResponseEntity<ExceptionResponse> handleNoSuchBucketException(NoSuchBucketException e) {
-        log.warn(S3ErrorCode.S3_BUCKET_NOT_FOUND.getMessage());
+        log.error("[S3 Bucket Not Found] Message: {}, StatusCode: {}", e.getMessage(), e.statusCode(), e);
         return ResponseEntity
                 .status(S3ErrorCode.S3_BUCKET_NOT_FOUND.getStatus())
                 .body(ExceptionResponse.of(S3ErrorCode.S3_BUCKET_NOT_FOUND));
@@ -24,7 +24,7 @@ public class S3ExceptionHandler {
 
     @ExceptionHandler(NoSuchKeyException.class)
     public ResponseEntity<ExceptionResponse> handleNoSuchKeyException(NoSuchKeyException e) {
-        log.warn(S3ErrorCode.S3_OBJECT_NOT_FOUND.getMessage());
+        log.error("[S3 Object Not Found] Message: {}, StatusCode: {}", e.getMessage(), e.statusCode(), e);
         return ResponseEntity
                 .status(S3ErrorCode.S3_OBJECT_NOT_FOUND.getStatus())
                 .body(ExceptionResponse.of(S3ErrorCode.S3_OBJECT_NOT_FOUND));
@@ -32,25 +32,19 @@ public class S3ExceptionHandler {
 
     @ExceptionHandler(S3Exception.class)
     public ResponseEntity<ExceptionResponse> handleS3Exception(S3Exception e) {
-        return switch (e.statusCode()) {
-            case 400 -> {
-                log.warn(S3ErrorCode.S3_BAD_REQUEST.getMessage());
-                yield ResponseEntity
-                        .status(S3ErrorCode.S3_BAD_REQUEST.getStatus())
-                        .body(ExceptionResponse.of(S3ErrorCode.S3_BAD_REQUEST));
-            }
-            case 403 -> {
-                log.warn(S3ErrorCode.S3_ACCESS_DENIED.getMessage());
-                yield ResponseEntity
-                        .status(S3ErrorCode.S3_ACCESS_DENIED.getStatus())
-                        .body(ExceptionResponse.of(S3ErrorCode.S3_ACCESS_DENIED));
-            }
-            default -> {
-                log.warn(S3ErrorCode.S3_INTERNAL_ERROR.getMessage());
-                yield ResponseEntity
-                        .status(S3ErrorCode.S3_INTERNAL_ERROR.getStatus())
-                        .body(ExceptionResponse.of(S3ErrorCode.S3_INTERNAL_ERROR));
-            }
+        int statusCode = e.statusCode();
+        log.error("[S3 Exception] StatusCode: {}, Message: {}", statusCode, e.getMessage(), e);
+
+        return switch (statusCode) {
+            case 400 -> ResponseEntity
+                    .status(S3ErrorCode.S3_BAD_REQUEST.getStatus())
+                    .body(ExceptionResponse.of(S3ErrorCode.S3_BAD_REQUEST));
+            case 403 -> ResponseEntity
+                    .status(S3ErrorCode.S3_ACCESS_DENIED.getStatus())
+                    .body(ExceptionResponse.of(S3ErrorCode.S3_ACCESS_DENIED));
+            default -> ResponseEntity
+                    .status(S3ErrorCode.S3_INTERNAL_ERROR.getStatus())
+                    .body(ExceptionResponse.of(S3ErrorCode.S3_INTERNAL_ERROR));
         };
     }
 }
