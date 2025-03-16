@@ -37,14 +37,10 @@ public class StudentQuestionController {
             }
     )
     public ResponseEntity<SuccessResponse<QuestionAllResponse>> getQuestions(HttpServletRequest request) {
-        log.debug("학생 사용자가 이전에 질문했던 목록을 요청합니다.");
-
         String studentId = (String) request.getAttribute("studentId");
         Long courseId = (Long) request.getAttribute("courseId");
 
         QuestionAllResponse response = studentQuestionService.getQuestionsByStudentId(studentId, courseId);
-
-        log.info("질문 목록을 성공적으로 조회했습니다.");
 
         return ResponseEntity
                 .status(HttpStatus.OK)
@@ -65,14 +61,10 @@ public class StudentQuestionController {
     public ResponseEntity<SuccessResponse<CourseQuestionResponse>> sendQuestion(
             @Valid @RequestBody QuestionSendRequest questionSendRequest,
             HttpServletRequest request) {
-        log.debug("학생 사용자가 질문 등록 및 전송을 요청합니다.");
-
         String studentId = (String) request.getAttribute("studentId");
         Long courseId = (Long) request.getAttribute("courseId");
 
         CourseQuestionResponse response = studentQuestionService.sendQuestion(studentId, courseId, questionSendRequest);
-
-        log.info("질문을 성공적으로 등록했습니다.");
 
         return ResponseEntity
                 .status(HttpStatus.OK)
@@ -94,13 +86,9 @@ public class StudentQuestionController {
     public ResponseEntity<Void> checkQuestion(
             @PathVariable("questionId") Long questionId,
             HttpServletRequest request) {
-        log.debug("학생 사용자가 질문 체크를 등록 및 전송합니다.");
-
         Long courseId = (Long) request.getAttribute("courseId");
 
         studentQuestionService.sendQuestionCheck(courseId, questionId);
-
-        log.info("질문 체크를 성공적으로 등록했습니다.");
 
         return ResponseEntity
                 .status(HttpStatus.NO_CONTENT)

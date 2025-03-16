@@ -38,14 +38,10 @@ public class StudentReactionController {
     )
     public ResponseEntity<Void> sendReaction(
             @Valid @RequestBody ReactionSendRequest reactionSendRequest,
-                    HttpServletRequest request) {
-        log.debug("학생 사용자가 반응 등록 및 전송을 요청합니다.");
-
+            HttpServletRequest request) {
         Long courseId = (Long) request.getAttribute("courseId");
 
         studentReactionService.sendReaction(courseId, reactionSendRequest);
-
-        log.info("반응을 성공적으로 등록했습니다.");
 
         return ResponseEntity
                 .status(HttpStatus.NO_CONTENT)

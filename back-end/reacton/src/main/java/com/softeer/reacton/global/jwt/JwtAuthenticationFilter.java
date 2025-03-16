@@ -52,7 +52,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         log.info("[JWT Filter Start] requestUri = {}, method = {}", requestUri, requestMethod);
 
-        if( requestMethod.equals("OPTIONS")) {
+        if (requestMethod.equals("OPTIONS")) {
             log.info("[JWT Filter Skipped] OPTIONS method detected.");
             chain.doFilter(request, response);
             return;

@@ -53,11 +53,9 @@ public class ProfessorCourseController {
         ActiveCourseResponse activeCourse = professorCourseQueryService.getActiveCourseByUser(professorId);
 
         if (activeCourse != null) {
-            log.debug("활성화된 수업이 존재합니다. : courseId = {}", activeCourse.getId());
             return ResponseEntity.status(HttpStatus.OK)
                     .body(SuccessResponse.of("활성화된 수업이 존재합니다.", activeCourse));
         } else {
-            log.debug("활성화된 수업이 존재하지 않습니다.");
             return ResponseEntity.status(HttpStatus.SEE_OTHER)
                     .header(HttpHeaders.LOCATION, FRONTEND_BASE_URL + "professor")
                     .build();
@@ -98,13 +96,10 @@ public class ProfessorCourseController {
             HttpServletRequest request,
             @PathVariable("courseId") Long courseId
     ) {
-        log.debug("특정 수업에 대한 상세 정보를 요청합니다. : courseId = {}", courseId);
-
         String oauthId = (String) request.getAttribute("oauthId");
         Long professorId = professorService.getProfessorIdByOauthId(oauthId);
         CourseDetailResponse response = professorCourseQueryService.getCourseDetail(courseId, professorId);
 
-        log.info("수업 상세 정보 조회를 완료했습니다.");
         return ResponseEntity
                 .status(HttpStatus.OK)
                 .body(SuccessResponse.of("성공적으로 조회했습니다.", response));
@@ -120,13 +115,10 @@ public class ProfessorCourseController {
             }
     )
     public ResponseEntity<SuccessResponse<CourseAllResponse>> getAllCourses(HttpServletRequest request) {
-        log.debug("사용자의 전체 수업 목록을 요청합니다.");
-
         String oauthId = (String) request.getAttribute("oauthId");
         Long professorId = professorService.getProfessorIdByOauthId(oauthId);
         CourseAllResponse response = professorCourseQueryService.getAllCourses(professorId);
 
-        log.info("전체 수업 정보 조회를 완료했습니다.");
         return ResponseEntity
                 .status(HttpStatus.OK)
                 .body(SuccessResponse.of("성공적으로 조회했습니다.", response));
@@ -144,14 +136,11 @@ public class ProfessorCourseController {
     public ResponseEntity<SuccessResponse<List<CourseSummaryResponse>>> searchCourses(
             @RequestParam("keyword") String keyword,
             HttpServletRequest request) {
-        log.debug("검색 결과에 따른 수업 목록을 요청합니다. : keyword = {}", keyword);
-
         String oauthId = (String) request.getAttribute("oauthId");
         Long professorId = professorService.getProfessorIdByOauthId(oauthId);
 
         List<CourseSummaryResponse> response = professorCourseQueryService.searchCourses(professorId, keyword);
 
-        log.info("검색을 완료했습니다.");
         return ResponseEntity
                 .status(HttpStatus.OK)
                 .body(SuccessResponse.of("성공적으로 조회했습니다.", response));

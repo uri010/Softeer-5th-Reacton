@@ -43,11 +43,7 @@ public class StudentCourseController {
     public ResponseEntity<SuccessResponse<CourseSummaryResponse>> getCourseByAccessCode(
             @PathVariable("accessCode") int accessCode
     ) {
-        log.debug("입장 코드와 일치하는 수업 조회를 요청합니다. : accessCode = {}", accessCode);
-
         CourseSummaryResponse response = studentCourseService.getCourseByAccessCode(accessCode);
-
-        log.info("입장 코드와 일치하는 수업을 성공적으로 조회했습니다.");
 
         return ResponseEntity
                 .status(HttpStatus.OK)
@@ -65,8 +61,6 @@ public class StudentCourseController {
     public ResponseEntity<Void> registerCourse(
             @PathVariable("accessCode") int accessCode
     ) {
-        log.debug("입장 코드와 일치하는 수업 참여를 요청합니다. : accessCode = {}", accessCode);
-
         String newAccessToken = studentCourseService.registerCourse(accessCode);
         ResponseCookie jwtCookie = ResponseCookie.from("student_access_token", newAccessToken)
                 .httpOnly(true)
@@ -76,8 +70,6 @@ public class StudentCourseController {
                 .sameSite("Strict")
                 .domain(cookieConfig.getDomain())
                 .build();
-
-        log.info("수업 참여에 성공했습니다.");
 
         return ResponseEntity
                 .status(HttpStatus.SEE_OTHER)
