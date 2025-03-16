@@ -30,12 +30,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             "/students/courses"
     );
 
-    private static final List<String> STUDENT_ACCESS_URLS = List.of(
-            "/students/questions",
-            "/students/requests",
-            "/students/reactions"
-    );
-
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {

@@ -2,7 +2,6 @@ package com.softeer.reacton.global.jwt;
 
 import com.softeer.reacton.global.exception.BaseException;
 import com.softeer.reacton.global.exception.code.JwtErrorCode;
-import com.softeer.reacton.global.jwt.dto.SignupTokenInfo;
 import com.softeer.reacton.global.jwt.dto.StudentTokenInfo;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.Cookie;
@@ -14,8 +13,6 @@ import org.springframework.web.bind.support.WebDataBinderFactory;
 import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.method.support.ModelAndViewContainer;
-
-import java.util.Objects;
 
 @Component
 @RequiredArgsConstructor
@@ -30,7 +27,7 @@ public class StudentTokenArgumentResolver implements HandlerMethodArgumentResolv
 
     @Override
     public Object resolveArgument(MethodParameter parameter, ModelAndViewContainer mavContainer,
-                                  NativeWebRequest webRequest, WebDataBinderFactory binderFactory) throws Exception {
+                                  NativeWebRequest webRequest, WebDataBinderFactory binderFactory) {
         HttpServletRequest request = (HttpServletRequest) webRequest.getNativeRequest();
         String token = extractTokenFromRequest(request);
 

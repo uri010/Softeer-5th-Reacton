@@ -68,22 +68,6 @@ public class JwtTokenUtil {
                 .compact();
     }
 
-    public void validateToken(String token) {
-        log.info("[JWT Validation] Start");
-
-        if (token == null || token.isBlank()) {
-            throw new BaseException(JwtErrorCode.ACCESS_TOKEN_ERROR);
-        }
-
-        try {
-            Jwts.parserBuilder().setSigningKey(secretKey).build().parseClaimsJws(token);
-        } catch (RuntimeException e) {
-            throw new BaseException(JwtErrorCode.ACCESS_TOKEN_ERROR);
-        }
-
-        log.info("[JWT Validation] Success");
-    }
-
     Claims getClaims(String token) {
         try {
             Claims claims = Jwts.parserBuilder()
@@ -91,7 +75,7 @@ public class JwtTokenUtil {
                     .build()
                     .parseClaimsJws(token)
                     .getBody();
-            log.info("[JWT Parsing Success] Claims = {}", claims);  // ✅ 로그 추가하여 claims 값 확인
+            log.info("[JWT Parsing Success] Claims = {}", claims);
             return claims;
         } catch (JwtException e) {
             throw new BaseException(JwtErrorCode.ACCESS_TOKEN_ERROR);
