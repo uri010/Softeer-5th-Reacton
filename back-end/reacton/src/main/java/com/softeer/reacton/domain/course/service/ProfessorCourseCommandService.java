@@ -45,8 +45,7 @@ public class ProfessorCourseCommandService {
 
     @Transactional
     public long createCourse(Professor professor, CourseRequest request) {
-        log.debug("수업을 생성합니다.");
-
+        log.info("[Course Create Start] professorId = {}", professor.getId());
         Course course = Course.create(request, professor);
 
         List<Schedule> schedules = scheduleService.createSchedules(request, course);
@@ -55,15 +54,17 @@ public class ProfessorCourseCommandService {
         List<Request> requests = requestService.createRequests(course);
         course.setRequests(requests);
 
-        return generateAccessCodeAndSave(course);
+        long courseId = generateAccessCodeAndSave(course);
+
+        log.info("[Course Create Completed] courseId = {}", courseId);
+        return courseId;
     }
 
     @Transactional
     public void updateCourse(Long professorId, long courseId, CourseRequest request) {
-        log.debug("수업 데이터를 업데이트합니다. : courseId = {}", courseId);
+        log.info("[Course Update Start] courseId = {}", courseId);
 
         if (request == null) {
-            log.warn("수업 수정 요청 데이터가 null입니다. : 'request' is null.");
             throw new BaseException(CourseErrorCode.COURSE_REQUEST_IS_NULL);
         }
 
@@ -82,12 +83,12 @@ public class ProfessorCourseCommandService {
         scheduleService.saveAll(newSchedules);
         course.setSchedules(newSchedules);
 
-        log.info("수업 업데이트가 완료되었습니다. : courseId = {}", courseId);
+        log.info("[Course Update Completed] courseId = {}", courseId);
     }
 
     @Transactional
     public void deleteCourse(Long professorId, long courseId) {
-        log.debug("수업을 삭제합니다. : courseId = {}", courseId);
+        log.info("[Course Delete Start] courseId = {}", courseId);
 
         if (!courseRepository.existsByIdAndProfessorId(courseId, professorId)) {
             throw new BaseException(CourseErrorCode.COURSE_NOT_FOUND);
@@ -99,34 +100,35 @@ public class ProfessorCourseCommandService {
 
         courseRepository.deleteByCourseId(courseId);
 
-        log.info("수업이 삭제되었습니다. : courseId = {}", courseId);
+        log.info("[Course Delete Completed] courseId = {}", courseId);
     }
 
     @Transactional
     public void startCourse(Long professorId, long courseId) {
-        log.debug("수업을 시작 상태로 변경합니다. courseId = {}", courseId);
+        log.info("[Course Start] courseId = {}", courseId);
 
         Course course = courseRepository.findByIdAndProfessorId(courseId, professorId)
                 .orElseThrow(() -> new BaseException(CourseErrorCode.COURSE_NOT_FOUND));
 
         boolean wasActive = course.isActive();
-        log.debug("시작을 요청한 수업의 활성화 상태입니다. : isActive = {}", wasActive);
+        log.debug("[Course Activation Check] courseId = {}, isActive = {}", courseId, wasActive);
 
         courseRepository.deactivateOtherCourses(professorId, courseId);
 
         if (!wasActive) {
+            log.info("[Course Resetting Data] courseId = {}", courseId);
             questionService.deleteAllByCourseId(course.getId());
             requestService.resetCountByCourseId(course.getId());
 
             course.activate();
             courseRepository.save(course);
         }
-        log.info("수업이 시작 상태로 변경되었습니다. courseId = {}", courseId);
+        log.info("[Course Start Completed] courseId = {}", courseId);
     }
 
     @Transactional
     public void closeCourse(Long professorId, long courseId) {
-        log.debug("수업을 종료 상태로 변경합니다. courseId = {}", courseId);
+        log.info("[Course Close] courseId = {}", courseId);
 
         Course course = courseRepository.findByIdAndProfessorId(courseId, professorId)
                 .orElseThrow(() -> new BaseException(CourseErrorCode.COURSE_NOT_FOUND));
@@ -134,14 +136,16 @@ public class ProfessorCourseCommandService {
         course.deactivate();
         questionService.deleteCompleteByCourse(course);
 
-        log.debug("SSE 서버에 수업 종료 메시지 전송을 요청합니다.");
+        log.debug("[Course Close SSE Message Sent] Sending SSE message for courseId = {}", courseId);
         SseMessage<Void> sseMessage = new SseMessage<>("COURSE_CLOSED", null);
         sseMessageSender.sendMessageToAll(String.valueOf(courseId), sseMessage);
 
-        log.info("수업이 종료 상태로 변경되었습니다. courseId = {}", courseId);
+        log.info("[Course Close Completed] courseId = {}", courseId);
     }
 
     public Map<String, String> uploadFile(Long professorId, long courseId, MultipartFile file) {
+        log.info("[File Upload Start] courseId = {}, fileName = {}", courseId, file.getOriginalFilename());
+
         Course course = courseRepository.findByIdAndProfessorId(courseId, professorId)
                 .orElseThrow(() -> new BaseException(CourseErrorCode.COURSE_NOT_FOUND));
 
@@ -151,6 +155,7 @@ public class ProfessorCourseCommandService {
         String s3Key = courseFileService.uploadFile(file);
         if (s3Key != null) {
             fileName = file.getOriginalFilename();
+            log.info("[File Uploaded to S3] courseId = {}, fileName = {}, s3Key = {}", courseId, fileName, s3Key);
         }
         try {
             professorCourseTransactionService.updateCourseFile(course, fileName, s3Key);
@@ -158,14 +163,19 @@ public class ProfessorCourseCommandService {
             courseFileService.deleteFileByS3key(s3Key);
             throw new BaseException(FileErrorCode.FILE_UPLOAD_FAILED_DB_ROLLBACK);
         }
+
+        log.info("[File Upload Completed] courseId = {}, fileName = {}", courseId, fileName);
         return Map.of("fileName", fileName != null ? fileName : "");
     }
 
     public Map<String, String> getCourseFileUrl(Long professorId, long courseId) {
+        log.info("[File Access Start] courseId = {}", courseId);
         Course course = courseRepository.findByIdAndProfessorId(courseId, professorId)
                 .orElseThrow(() -> new BaseException(CourseErrorCode.COURSE_NOT_FOUND));
 
         String fileUrl = courseFileService.generatePresignedUrl(course);
+        log.info("[File Access Completed] courseId = {}, fileUrl = {}", courseId, fileUrl);
+
         return Map.of("fileUrl", fileUrl);
     }
 
@@ -174,20 +184,21 @@ public class ProfessorCourseCommandService {
     }
 
     private long generateAccessCodeAndSave(Course course) {
+        log.info("[Access Code Generation Start] courseId = {}", course.getId());
+
         for (int i = 0; i < MAX_RETRIES; i++) {
             int accessCode = generateUniqueAccessCode();
-            log.debug("입장 코드 생성 시도 {}회 - {}", i + 1, accessCode);
+            log.debug("[Access Code Attempt] Attempt {} - Code: {}", i + 1, accessCode);
 
             course.setAccessCode(accessCode);
 
             try {
                 return professorCourseTransactionService.saveCourse(course);
             } catch (DataIntegrityViolationException e) {
-                log.warn("입장 코드 중복으로 인해 저장 실패 - 재시도 {}회: {}", i + 1, accessCode);
+                log.warn("[Duplicate Access Code] Retry {} - Code: {}", i + 1, accessCode);
             }
         }
 
-        log.error("최대 시도 횟수({}) 초과로 인해 입장 코드 생성 실패", MAX_RETRIES);
         throw new BaseException(CourseErrorCode.ACCESS_CODE_GENERATION_FAILED);
     }
 
