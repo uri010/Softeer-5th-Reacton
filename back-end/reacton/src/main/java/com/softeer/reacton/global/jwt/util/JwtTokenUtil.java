@@ -1,4 +1,4 @@
-package com.softeer.reacton.global.jwt;
+package com.softeer.reacton.global.jwt.util;
 
 import com.softeer.reacton.global.exception.BaseException;
 import com.softeer.reacton.global.exception.code.JwtErrorCode;
@@ -68,7 +68,7 @@ public class JwtTokenUtil {
                 .compact();
     }
 
-    Claims getClaims(String token) {
+    public Claims getClaims(String token) {
         try {
             Claims claims = Jwts.parserBuilder()
                     .setSigningKey(secretKey)

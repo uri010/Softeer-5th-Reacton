@@ -5,7 +5,7 @@ import com.softeer.reacton.domain.professor.repository.ProfessorRepository;
 import com.softeer.reacton.global.exception.BaseException;
 import com.softeer.reacton.global.exception.code.GlobalErrorCode;
 import com.softeer.reacton.global.exception.code.OAuthErrorCode;
-import com.softeer.reacton.global.jwt.JwtTokenUtil;
+import com.softeer.reacton.global.jwt.util.JwtTokenUtil;
 import com.softeer.reacton.global.oauth.dto.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

@@ -1,7 +1,8 @@
-package com.softeer.reacton.global.jwt;
+package com.softeer.reacton.global.jwt.resolver;
 
 import com.softeer.reacton.global.exception.BaseException;
 import com.softeer.reacton.global.exception.code.JwtErrorCode;
+import com.softeer.reacton.global.jwt.util.JwtTokenUtil;
 import com.softeer.reacton.global.jwt.dto.ProfessorSignupInfo;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.Cookie;

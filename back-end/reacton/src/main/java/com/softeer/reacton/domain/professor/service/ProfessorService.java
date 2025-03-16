@@ -15,7 +15,7 @@ import com.softeer.reacton.global.exception.BaseException;
 import com.softeer.reacton.global.exception.code.FileErrorCode;
 import com.softeer.reacton.global.exception.code.ProfessorErrorCode;
 import com.softeer.reacton.global.exception.code.S3ErrorCode;
-import com.softeer.reacton.global.jwt.JwtTokenUtil;
+import com.softeer.reacton.global.jwt.util.JwtTokenUtil;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

@@ -1,8 +1,8 @@
 package com.softeer.reacton.global.config;
 
-import com.softeer.reacton.global.jwt.ProfessorAuthResolver;
-import com.softeer.reacton.global.jwt.ProfessorSignupResolver;
-import com.softeer.reacton.global.jwt.StudentAuthResolver;
+import com.softeer.reacton.global.jwt.resolver.ProfessorAuthResolver;
+import com.softeer.reacton.global.jwt.resolver.ProfessorSignupResolver;
+import com.softeer.reacton.global.jwt.resolver.StudentAuthResolver;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Configuration;

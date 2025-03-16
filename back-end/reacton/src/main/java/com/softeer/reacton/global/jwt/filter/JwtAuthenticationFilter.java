@@ -1,4 +1,4 @@
-package com.softeer.reacton.global.jwt;
+package com.softeer.reacton.global.jwt.filter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.softeer.reacton.global.exception.BaseException;
