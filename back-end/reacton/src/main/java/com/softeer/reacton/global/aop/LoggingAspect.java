@@ -9,16 +9,14 @@ import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.springframework.stereotype.Component;
 
-import java.util.Arrays;
-
 @Aspect
 @Component
 @Slf4j
-public class HttpRequestLoggingAspect {
+public class LoggingAspect {
 
     private final HttpServletRequest request;
 
-    public HttpRequestLoggingAspect(HttpServletRequest request) {
+    public LoggingAspect(HttpServletRequest request) {
         this.request = request;
     }
 
