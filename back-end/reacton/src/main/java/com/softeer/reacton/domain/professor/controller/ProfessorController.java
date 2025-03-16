@@ -127,14 +127,11 @@ public class ProfessorController {
             }
     )
     public ResponseEntity<Void> signUp(
+            SignupTokenInfo signTokenInfo,
             @RequestPart("name") @Pattern(regexp = "^[가-힣a-zA-Z]{1,20}$", message = "이름은 한글 또는 영문만 1~20자 입력 가능합니다.") String name,
-            @RequestPart(value = "profileImage", required = false) MultipartFile profileImageFile,
-            HttpServletRequest request) {
-        String oauthId = (String) request.getAttribute("oauthId");
-        String email = (String) request.getAttribute("email");
-        boolean isSignedUp = (boolean) request.getAttribute("isSignedUp");
+            @RequestPart(value = "profileImage", required = false) MultipartFile profileImageFile) {
+        String newAccessToken = professorService.signUp(name, profileImageFile, signTokenInfo.oauthId(), signTokenInfo.email(), signTokenInfo.isSignedUp());
 
-        String newAccessToken = professorService.signUp(name, profileImageFile, oauthId, email, isSignedUp);
         ResponseCookie jwtCookie = ResponseCookie.from("access_token", newAccessToken)
                 .httpOnly(true)
                 .secure(true)
